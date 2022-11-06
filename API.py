@@ -1,0 +1,36 @@
+import requests
+from pytube import YouTube
+
+def buscar(query):
+  response = requests.get(f"https://www.googleapis.com/youtube/v3/search?key=AIzaSyCMOwp6gCoxjxX-zkHRXc-gc5RANrJ__nQ&part=snippet&q={ query }&maxResults=3&categories=Music")
+  res = response.json()
+  song = res['items'][0]['snippet']
+  song_title = song['title']
+  song_autor = song['channelTitle']
+  song_id = res['items'][0]['id']['videoId']
+  song_url = f'youtube.com/watch?v={ song_id }'
+  return song_title, song_url
+
+
+def descarga(url):
+  song = YouTube(url)
+  try:
+    streams = song.streams.filter(type='audio', audio_codec='opus').order_by('abr')
+    
+  except:
+    streams = song.streams.filter(type='audio').order_by('abr')  
+  finally: 
+    file = streams.last().download()
+    print( streams
+         )
+    file_title = song.title
+    file_author = song.author
+    
+    print(file)
+    print(song)
+
+  return file, file_title, file_author
+  
+  
+  
+
