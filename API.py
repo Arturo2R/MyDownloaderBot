@@ -1,8 +1,10 @@
+import os
 import requests
 from pytube import YouTube
 
 def buscar(query):
-  response = requests.get(f"https://www.googleapis.com/youtube/v3/search?key=AIzaSyCMOwp6gCoxjxX-zkHRXc-gc5RANrJ__nQ&part=snippet&q={ query }&maxResults=3&categories=Music")
+  response = requests.get(f"https://www.googleapis.com/youtube/v3/search?key={ os.environ['GOOGLE-API'] }&part=snippet&q={ query }&maxResults=3&categories=Music")
+
   res = response.json()
   song = res['items'][0]['snippet']
   song_title = song['title']
