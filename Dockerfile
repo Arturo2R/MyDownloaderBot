@@ -39,8 +39,7 @@ RUN poetry install --no-interaction --no-cache --without dev
 COPY . /app
 
 # install ffmpeg
-FROM ubuntu:latest
-RUN apt-get update -qq && apt-get install ffmpeg -y
+RUN apt-get -y update && apt-get -y upgrade && apt-get install -y ffmpeg
 
 # Run Application
 CMD [ "poetry", "run", "python3", "main.py"]
