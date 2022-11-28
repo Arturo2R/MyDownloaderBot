@@ -1,7 +1,9 @@
 import os
 import requests
 from pytube import YouTube
-#from spotdl import Spotdl
+from spotdl import Spotdl
+
+spotdl = Spotdl(client_id=os.environ['CLIENT-ID'], client_secret= os.environ['CLIENT-SCRT'])
 
 def buscar(query):
   response = requests.get(f"https://www.googleapis.com/youtube/v3/search?key={ os.environ['GOOGLE-API'] }&part=snippet&q={ query }&maxResults=3&categories=Music")
@@ -33,4 +35,11 @@ def descarga(url):
     print(song)
 
   return file, file_title, file_author
+
+def nuevadescarga(query):
+	songs = spotdl.search([query])
+	# results = spotdl.download_songs(songs)
+	song, path = spotdl.download(songs[0])
+	print(path)
+	return path
 

@@ -9,13 +9,12 @@ description = ""
 name = "mydownloaderbot"
 version = "0.1.0"
 [tool.poetry.dependencies]
-python = ">=3.7,<4"
 mutagen = "^1.45.1"
+python = "^3.8"
 python-telegram-bot = "^13.1"
 pytube = "^12.1.0"
-replit = "^2.0.0"
+requests = "^2.28.1"
+spotdl = "^4.0.5"
 validators = "^0.18.2"
 wget = "^3.2"
-requests = "^2.28.1"
-
 [tool.poetry.dev-dependencies]
