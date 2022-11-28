@@ -41,4 +41,4 @@ COPY . /app
 
 # Run Application
 EXPOSE 5000
-CMD [ "poetry", "run", "python", "-m", "flask", "run", "--host=0.0.0.0" ]
+CMD [ "poetry", "run", "python3", "main.py"]
