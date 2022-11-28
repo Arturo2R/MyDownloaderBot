@@ -3,6 +3,7 @@ from telegram import InputMediaAudio
 import logging
 import os
 
+
 from API import buscar, descarga
 
 
@@ -24,19 +25,31 @@ class UserData:
 	def __str__(self):
 		return f"user:{self.name} id:{self.chatid} url:{self.songurl} query:{self.search}"
 
-	def download(self):
-		return descarga(self.songurl)
+	def download(self, context):
+		file, file_title, file_author = descarga(self.songurl)
+		print(file, file_title)
+		context.bot.send_audio(chat_id=self.chatid,
+						   performer=file_author,
+						   audio=open(file, 'rb'))
+		os.remove(file)
+		
 
 
 users = {
   "prop": "todo"
 }
 
+def checkstate(chat):
+	if chat.id in users: 
+		print('all okey')
+	else:
+		users[chat.id] = UserData(chat.id, '', '', '', chat.username, chat.first_name, chat.last_name)
+	print(users[chat.id])
+	
+
 def start(update, context):
 	chat = update.effective_chat
-	users[chat.id] = UserData(chat.id, '', '', '', chat.username, chat.first_name, chat.last_name)
-	
-	print(users[chat.id])
+	checkstate(chat)
 	
 	context.bot.send_message(
         chat_id=chat.id,
@@ -47,29 +60,35 @@ def start(update, context):
 
 def echo(update, context):
 	chat = update.effective_chat
+	checkstate(chat)
+	
 	# global song_title, song_url
 	song_title, song_url = buscar(update.message.text)
 	users[chat.id].songurl = song_url
 	users[chat.id].title = song_title
-	
-	
-	context.bot.send_message(chat_id=update.effective_chat.id,text=f'te refieres a {song_title} {song_url}')
 
+	context.bot.send_message(chat_id=chat.id, text=f'te refieres a {song_title} {song_url}')
 	context.bot.send_message(
-		chat_id=update.effective_chat.id,
-		text='Escribe el comando /descargar para descargar la cancion en mp3')
+		chat_id=chat.id,
+		text='Escribe el comando /descargar para descargar la cancion en webm')
 
 
 def descargar(update, context):
 	chat = update.effective_chat
-	context.bot.send_message(chat_id=update.effective_chat.id,
+	checkstate(chat)
+	
+	context.bot.send_message(chat_id=chat.id,
 							 text=f'Descargando {users[chat.id].title}')
-	file, file_title, file_author = descarga(users[chat.id].songurl)
-	print(file, file_title)
-	context.bot.send_audio(chat_id=update.effective_chat.id,
-						   performer=file_author,
-						   audio=open(file, 'rb'))
-	os.remove(file)
+	users[chat.id].download(context)
+
+def link_d(update, context):
+	chat = update.effective_chat
+	checkstate(chat)
+	
+	context.bot.send_message(chat_id=chat.id,
+							 text=f'Descargando')
+	users[chat.id].download(context)
+
 
 
 def unknown(update, context):
@@ -91,7 +110,7 @@ def main() -> None:
     descargar_handler = CommandHandler('descargar', descargar)
     dispatcher.add_handler(descargar_handler)
 
-    link_handler = MessageHandler(Filters.entity('url'), descargar)
+    link_handler = MessageHandler(Filters.entity('url'), link_d)
     dispatcher.add_handler(link_handler)
 
     dispatcher.add_handler(MessageHandler(Filters.command, unknown))

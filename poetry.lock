@@ -10,6 +10,7 @@ python-versions = ">=3.6"
 async-timeout = ">=3.0,<4.0"
 attrs = ">=17.3.0"
 chardet = ">=2.0,<4.0"
+idna-ssl = {version = ">=1.0", markers = "python_version < \"3.7\""}
 multidict = ">=4.5,<7.0"
 typing-extensions = ">=3.6.5"
 yarl = ">=1.0,<2.0"
@@ -26,6 +27,8 @@ optional = false
 python-versions = "*"
 
 [package.dependencies]
+funcsigs = {version = "*", markers = "python_version == \"2.7\""}
+futures = {version = "*", markers = "python_version == \"2.7\""}
 pytz = "*"
 six = ">=1.4.0"
 tzlocal = ">=1.2"
@@ -110,6 +113,8 @@ python-versions = ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*"
 
 [package.dependencies]
 cffi = ">=1.12"
+enum34 = {version = "*", markers = "python_version < \"3\""}
+ipaddress = {version = "*", markers = "python_version < \"3\""}
 six = ">=1.4.1"
 
 [package.extras]
@@ -126,6 +131,14 @@ description = "Decorators for Humans"
 category = "main"
 optional = false
 python-versions = ">=2.6, !=3.0.*, !=3.1.*"
+
+[[package]]
+name = "enum34"
+version = "1.1.10"
+description = "Python 3.4 Enum backported to 3.3, 3.2, 3.1, 2.7, 2.6, 2.5, and 2.4"
+category = "main"
+optional = false
+python-versions = "*"
 
 [[package]]
 name = "flask"
@@ -147,12 +160,47 @@ docs = ["sphinx", "pallets-sphinx-themes", "sphinxcontrib-log-cabinet", "sphinx-
 dotenv = ["python-dotenv"]
 
 [[package]]
+name = "funcsigs"
+version = "1.0.2"
+description = "Python function signatures from PEP362 for Python 2.6, 2.7 and 3.2+"
+category = "main"
+optional = false
+python-versions = "*"
+
+[[package]]
+name = "futures"
+version = "3.4.0"
+description = "Backport of the concurrent.futures package from Python 3"
+category = "main"
+optional = false
+python-versions = ">=2.6, <3"
+
+[[package]]
 name = "idna"
 version = "3.1"
 description = "Internationalized Domain Names in Applications (IDNA)"
 category = "main"
 optional = false
 python-versions = ">=3.4"
+
+[[package]]
+name = "idna-ssl"
+version = "1.1.0"
+description = "Patch ssl.match_hostname for Unicode(idna) domains support"
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+idna = ">=2.0"
+
+[[package]]
+name = "ipaddress"
+version = "1.0.23"
+description = "IPv4/IPv6 manipulation library"
+category = "main"
+optional = false
+python-versions = "*"
 
 [[package]]
 name = "itsdangerous"
@@ -275,12 +323,23 @@ optional = false
 python-versions = ">= 3.5"
 
 [[package]]
+name = "typing"
+version = "3.10.0.0"
+description = "Type Hints for Python"
+category = "main"
+optional = false
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, <3.5"
+
+[[package]]
 name = "typing-extensions"
 version = "3.7.4.3"
 description = "Backported and Experimental Type Hints for Python 3.5+"
 category = "main"
 optional = false
 python-versions = "*"
+
+[package.dependencies]
+typing = {version = ">=3.7.4", markers = "python_version < \"3.5\""}
 
 [[package]]
 name = "tzlocal"
@@ -339,11 +398,12 @@ python-versions = ">=3.6"
 [package.dependencies]
 idna = ">=2.0"
 multidict = ">=4.0"
+typing-extensions = {version = ">=3.7.4", markers = "python_version < \"3.8\""}
 
 [metadata]
 lock-version = "1.1"
-python-versions = "^3.8"
-content-hash = "5f28a7138a78282fe67d7e8ddb3fa491440e33a720500125bcd0a301cf760469"
+python-versions = "*"
+content-hash = "94e138e82e87fa488bd2d6a9a911f8b6ed36cb6cf8d6b3550e99df05c9eabbd8"
 
 [metadata.files]
 aiohttp = []
@@ -356,8 +416,13 @@ chardet = []
 click = []
 cryptography = []
 decorator = []
+enum34 = []
 flask = []
+funcsigs = []
+futures = []
 idna = []
+idna-ssl = []
+ipaddress = []
 itsdangerous = []
 jinja2 = []
 markupsafe = []
@@ -370,6 +435,7 @@ pytz = []
 replit = []
 six = []
 tornado = []
+typing = []
 typing-extensions = []
 tzlocal = []
 validators = []
