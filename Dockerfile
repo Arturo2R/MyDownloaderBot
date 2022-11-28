@@ -43,3 +43,4 @@ RUN apt-get -y update && apt-get -y upgrade && apt-get install -y ffmpeg
 
 # Run Application
 CMD [ "poetry", "run", "python3", "main.py"]
+
