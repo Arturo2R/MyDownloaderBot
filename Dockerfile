@@ -31,7 +31,6 @@ WORKDIR /app
 COPY poetry.lock pyproject.toml ./
 
 # [OPTIONAL] Validate the project is properly configured
-RUN poetry check
 
 # Install Dependencies
 RUN poetry install --no-interaction --no-cache --without dev
@@ -40,5 +39,5 @@ RUN poetry install --no-interaction --no-cache --without dev
 COPY . /app
 
 # Run Application
-EXPOSE 5000
+
 CMD [ "poetry", "run", "python3", "main.py"]
