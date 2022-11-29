@@ -1,10 +1,9 @@
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, InlineQueryHandler
-from telegram import InputMediaAudio, InlineQueryResultArticle
 import logging
 import os
+from telegram.ext import Updater, ContextTypes, CommandHandler, MessageHandler, Filters, CallbackQueryHandler
 
-from API import buscar, descarga, nuevadescarga, getrecomendaciones
-
+from telegram import Update, InputMediaAudio, InlineQueryResultArticle, InlineKeyboardButton, InlineKeyboardMarkup, constants
+from API import buscar, descarga, nuevadescarga, getrecomendaciones, detectsong
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -148,6 +147,39 @@ def recomendacion(update, context):
 	# input_message_content=InputTextMessageContent(query.upper()),
 
 
+def audio_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+	chat = update.effective_chat
+	checkstate(chat)
+	context.bot.send_message(chat_id=chat.id,
+                             text="Buscando")
+	file = context.bot.getFile(update.message.voice)
+	song = detectsong(file.file_path)
+	users[chat.id].title = song['name'] + ' - ' + song['artist']
+	message = f" *{song['name']}* \- _{song['artist']}_ \n album: {song['album']} \n [spotify]({song['url']}) \n "
+	button = [[InlineKeyboardButton("Descargar", callback_data="descargar")]]
+	context.bot.send_message(chat_id=update.effective_chat.id,
+                             text=message, parse_mode=constants.ParseMode.MARKDOWN_V2, reply_markup=InlineKeyboardMarkup(button))
+	
+	print(file)
+	# print ("file_id: " + str(update.message.voice.file_id))
+	# file.download('voice.ogg')
+
+def queryhandler(update, context):
+	query = update.callback_query.data
+	chat = update.effective_chat
+	checkstate(chat)
+	
+	if "descargar" in query:
+		song, path = nuevadescarga(users[chat.id].title)	
+		context.bot.send_audio(chat_id=chat.id, audio=open(path, 'rb'))
+		if song.song_id not in users[chat.id].songhistory :
+			users[chat.id].songhistory.append(song.song_id)
+
+		users[chat.id].genres.extend(song.genres)
+		
+		os.remove(path)
+
+
 
 def unknown(update, context):
     context.bot.send_message(chat_id=update.effective_chat.id,
@@ -175,6 +207,9 @@ def main() -> None:
 	dispatcher.add_handler(youtubeh)
 	
 	link_handler = MessageHandler(Filters.entity('url'), link_d)
+
+	dispatcher.add_handler(MessageHandler(Filters.voice & ~Filters.command, audio_handler))
+	dispatcher.add_handler(CallbackQueryHandler(queryhandler))
 
 	# application.add_handler(InlineQueryHandler(inline_query))
 	dispatcher.add_handler(CommandHandler('recomiendame', recomendacion))

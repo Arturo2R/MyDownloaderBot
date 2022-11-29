@@ -85,6 +85,26 @@ def getrecomendaciones(songs, genres, artist):
 	url = "https://open.spotify.com/track/" + res['tracks'][0]['id']
 	return url
 
+
+def detectsong(urlofsong):
+	response = requests.get(
+		"https://api.audd.io/", 
+		params={ 
+			'api_token': os.environ['AUDD-TOKEN'], 
+			'url': urlofsong,
+			'return': 'spotify'
+		},
+	)
+	res = response.json()
+	song = {
+		'artist': res['result']['spotify']['artists'][0]['name'],
+		'name': res['result']['spotify']['name'],
+		'album': res['result']['spotify']['album']['name'],
+		'url': res['result']['spotify']['external_urls']['spotify'],
+		'image':  res['result']['spotify']['album']['images'][0]
+	}
+	print(song)
+	return song
 # getrecomendaciones(['0tfNpwQTfHuBvv2jQESnaR'], ['pop', 'dance pop'],[''])
 	
 
