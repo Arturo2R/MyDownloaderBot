@@ -146,8 +146,8 @@ def recomendacion(update, context):
 	
 	# input_message_content=InputTextMessageContent(query.upper()),
 
-x = ['_', '*', '[', ']', '(', ')', '~', '`', '>', '#', '+', '-', '=', '|', '{', '}', '.', '!']
-escape = lambda s, escapechar, specialchars: "".join(escapechar + c if c in specialchars or c == escapechar else c for c in s)
+# x = ['_', '*', '[', ']', '(', ')', '~', '`', '>', '#', '+', '-', '=', '|', '{', '}', '.', '!']
+# escape = lambda s, escapechar, specialchars: "".join(escapechar + c if c in specialchars or c == escapechar else c for c in s)
 
 def audio_handler(update, context) -> None:
 	chat = update.effective_chat
@@ -162,7 +162,7 @@ def audio_handler(update, context) -> None:
 	else:
 		users[chat.id].title = str(song['name'] + ' ' + song['artist'])
 		message = f" {song['name']} {song['artist']} \n album: {song['album']} \n {song['url']} \n "
-		message = escape(message, "\\", x)
+		# message = escape(message, "\\", x)
 		button = [[InlineKeyboardButton("Descargar", callback_data="descargar")]]
 		context.bot.send_message(chat_id=update.effective_chat.id,
 	                             text=message, reply_markup=InlineKeyboardMarkup(button))
