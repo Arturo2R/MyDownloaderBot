@@ -155,7 +155,7 @@ def audio_handler(update, context) -> None:
 	file = context.bot.getFile(update.message.voice)
 	song = detectsong(file.file_path)
 	users[chat.id].title = song['name'] + ' - ' + song['artist']
-	message = f" *{song['name']}* \- _{song['artist']}_ \n album: {song['album']} \n [spotify]({song['url']}) \n "
+	message = f" *{song['name']}* \- _{song['artist']}_ \n album: {song['album']} \n {song['url']} \n "
 	button = [[InlineKeyboardButton("Descargar", callback_data="descargar")]]
 	context.bot.send_message(chat_id=update.effective_chat.id,
                              text=message, parse_mode=constants.PARSEMODE_MARKDOWN_V2, reply_markup=InlineKeyboardMarkup(button))
