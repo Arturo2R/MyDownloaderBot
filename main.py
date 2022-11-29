@@ -1,8 +1,8 @@
 import logging
 import os
-from telegram.ext import Updater, ContextTypes, CommandHandler, MessageHandler, Filters, CallbackQueryHandler
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackQueryHandler
 
-from telegram import Update, InputMediaAudio, InlineQueryResultArticle, InlineKeyboardButton, InlineKeyboardMarkup, constants
+from telegram import InputMediaAudio, InlineQueryResultArticle, InlineKeyboardButton, InlineKeyboardMarkup, constants
 from API import buscar, descarga, nuevadescarga, getrecomendaciones, detectsong
 
 logging.basicConfig(
@@ -147,7 +147,7 @@ def recomendacion(update, context):
 	# input_message_content=InputTextMessageContent(query.upper()),
 
 
-def audio_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+def audio_handler(update, context) -> None:
 	chat = update.effective_chat
 	checkstate(chat)
 	context.bot.send_message(chat_id=chat.id,
