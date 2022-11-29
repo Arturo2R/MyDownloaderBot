@@ -165,7 +165,7 @@ def audio_handler(update, context) -> None:
 		message = escape(message, "\\", x)
 		button = [[InlineKeyboardButton("Descargar", callback_data="descargar")]]
 		context.bot.send_message(chat_id=update.effective_chat.id,
-	                             text=message, parse_mode=constants.PARSEMODE_MARKDOWN_V2, reply_markup=InlineKeyboardMarkup(button))
+	                             text=message, reply_markup=InlineKeyboardMarkup(button))
 		
 		print(file)
 		# print ("file_id: " + str(update.message.voice.file_id))
