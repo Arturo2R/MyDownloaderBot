@@ -4,11 +4,11 @@ from pytube import YouTube
 from spotdl import Spotdl
 import json
 
-spotdl = Spotdl(client_id=os.environ['CLIENT-ID'], client_secret= os.environ['CLIENT-SCRT'])
+spotdl = Spotdl(client_id=os.environ['CLIENTID'], client_secret= os.environ['CLIENTSCRT'])
 
 def spotauthentication():
-	CLIENT_ID = os.environ['CLIENT-ID']
-	CLIENT_SECRET = os.environ['CLIENT-SCRT']
+	CLIENT_ID = os.environ['CLIENTID']
+	CLIENT_SECRET = os.environ['CLIENTSCRT']
 	
 	grant_type = 'client_credentials'
 	body_params = {'grant_type' : grant_type}
@@ -24,7 +24,7 @@ def spotauthentication():
 token = spotauthentication()
 
 def buscar(query):
-  response = requests.get(f"https://www.googleapis.com/youtube/v3/search?key={ os.environ['GOOGLE-API'] }&part=snippet&q={ query }&maxResults=3&categories=Music")
+  response = requests.get(f"https://www.googleapis.com/youtube/v3/search?key={ os.environ['GOOGLEAPI'] }&part=snippet&q={ query }&maxResults=3&categories=Music")
 
   res = response.json()
   song = res['items'][0]['snippet']
@@ -84,27 +84,32 @@ def getrecomendaciones(songs, genres, artist):
 	print(res['tracks'][0]['href'])
 	url = "https://open.spotify.com/track/" + res['tracks'][0]['id']
 	return url
+	
 
 
 def detectsong(urlofsong):
-	response = requests.get(
-		"https://api.audd.io/", 
-		params={ 
-			'api_token': os.environ['AUDD-TOKEN'], 
-			'url': urlofsong,
-			'return': 'spotify'
-		},
-	)
-	res = response.json()
-	song = {
-		'artist': res['result']['spotify']['artists'][0]['name'],
-		'name': res['result']['spotify']['name'],
-		'album': res['result']['spotify']['album']['name'],
-		'url': res['result']['spotify']['external_urls']['spotify'],
-		'image':  res['result']['spotify']['album']['images'][0]
-	}
-	print(song)
-	return song
+	try:
+		response = requests.get(
+			"https://api.audd.io/", 
+			params={ 
+				'api_token': os.environ['AUDDTOKEN'], 
+				'url': urlofsong,
+				'return': 'spotify'
+			},
+		)
+		res = response.json()
+		song = {
+			'artist': res['result']['spotify']['artists'][0]['name'],
+			'name': res['result']['spotify']['name'],
+			'album': res['result']['spotify']['album']['name'],
+			'url': res['result']['spotify']['external_urls']['spotify'],
+			'image':  res['result']['spotify']['album']['images'][0]
+		}
+		print(song)
+		return song
+	except:
+		print("No se se encontro la cancion")
+		return "nope"
 # getrecomendaciones(['0tfNpwQTfHuBvv2jQESnaR'], ['pop', 'dance pop'],[''])
 	
 

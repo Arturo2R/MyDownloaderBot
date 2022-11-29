@@ -146,6 +146,47 @@ def recomendacion(update, context):
 	
 	# input_message_content=InputTextMessageContent(query.upper()),
 
+x = ['_', '*', '[', ']', '(', ')', '~', '`', '>', '#', '+', '-', '=', '|', '{', '}', '.', '!']
+escape = lambda s, escapechar, specialchars: "".join(escapechar + c if c in specialchars or c == escapechar else c for c in s)
+
+def audio_handler(update, context) -> None:
+	chat = update.effective_chat
+	checkstate(chat)
+	context.bot.send_message(chat_id=chat.id,
+                             text="Buscando")
+	file = context.bot.getFile(update.message.voice)
+	song = detectsong(file.file_path)
+	if song == "nope":
+		context.bot.send_message(chat_id=chat.id,
+                             text="No se encontro la cancion")
+	else:
+		users[chat.id].title = str(song['name'] + ' ' + song['artist'])
+		message = f" {song['name']} {song['artist']} \n album: {song['album']} \n {song['url']} \n "
+		message = escape(message, "\\", x)
+		button = [[InlineKeyboardButton("Descargar", callback_data="descargar")]]
+		context.bot.send_message(chat_id=update.effective_chat.id,
+	                             text=message, parse_mode=constants.PARSEMODE_MARKDOWN_V2, reply_markup=InlineKeyboardMarkup(button))
+		
+		print(file)
+		# print ("file_id: " + str(update.message.voice.file_id))
+		# file.download('voice.ogg')
+
+def queryhandler(update, context):
+	query = update.callback_query.data
+	chat = update.effective_chat
+	checkstate(chat)
+	if "descargar" in query:
+		context.bot.send_message(chat_id=update.effective_chat.id,
+                             text="Descargando") 
+		song, path = nuevadescarga(users[chat.id].title)	
+		context.bot.send_audio(chat_id=chat.id, audio=open(path, 'rb'))
+		if song.song_id not in users[chat.id].songhistory :
+			users[chat.id].songhistory.append(song.song_id)
+
+		users[chat.id].genres.extend(song.genres)
+		
+		os.remove(path)
+
 
 def audio_handler(update, context) -> None:
 	chat = update.effective_chat
@@ -187,7 +228,7 @@ def unknown(update, context):
 
 
 def main() -> None:
-	updater = Updater(os.environ['BOT-TOKEN'], use_context=True)
+	updater = Updater(os.environ['BOTTOKEN'], use_context=True)
 	
 	dispatcher = updater.dispatcher
 
