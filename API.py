@@ -57,7 +57,6 @@ def descargayoutube(url, type:"audio"or"video"="audio"):
 
   return file_title, file 
 
-descargayoutube("https://www.youtube.com/watch?v=F4neLJQC1_E", "video")
 
 def nuevadescarga(songg):
 	# results = spotdl.download_songs(songs)
