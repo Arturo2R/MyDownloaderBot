@@ -52,30 +52,28 @@ def checkstate(chat):
 x = ['_', '*', '[', ']', '(', ')', '~', '`', '>', '#', '+', '-', '=', '|', '{', '}', '.', '!']
 escape = lambda s, escapechar, specialchars: "".join(escapechar + c if c in specialchars or c == escapechar else c for c in s)
 
-def mostrartarjeta(update, context, user:UserData,  source:"spotify"or"youtube", url:str, artist="nope", image="nope", album="nope"):
+def mostrartarjeta(update, context, user:UserData, name:str,  source:"spotify"or"youtube", url:str, artist="nope", image="nope", album="nope"):
 	#artist=escape(artist, "\\", x)
 	#name=escape(name, "\\", x)
 	#image=escape(image, "\\", x)
 	#album=escape(album, "\\", x)
 	#source=escape(source, "\\", x)
-	
-	# message = escape(message, "\\", x)
 	if artist=="nope":
 		message = f"Te refieres a {name} \n {url} \n "
-		user.title = str(name)
 	else:
 		message = f" {name} {artist} \n album: {album} \n {url} \n "
 		user.title = str(name + ' ' +artist)
-	user.url = str(url)
-		
-		
+	
+	
+	# message = escape(message, "\\", x)
+
 	button = [[InlineKeyboardButton("Descargar", callback_data=f"descargar-{source}-audio")]]
 	context.bot.send_message(chat_id=update.effective_chat.id,text=message,reply_markup=InlineKeyboardMarkup(button))
 
 def descargar(update, context, id, source):
 	context.bot.send_message(chat_id=id, text="Descargando") 
 	if source == "spotify":
-		song, path = nuevadescarga(users[id].title)
+		song, path = nuevadescarga(users[id].son)
 		if song.song_id not in users[id].songhistory :
 			users[id].songhistory.append(song.song_id)
 		users[id].genres.extend(song.genres)
@@ -197,7 +195,7 @@ def audio_handler(update, context) -> None:
 		users[chat.id].title = str(song['name'] + ' ' + song['artist'])
 		message = f" {song['name']} {song['artist']} \n album: {song['album']} \n {song['url']} \n "
 		# message = escape(message, "\\", x)
-		button = [[InlineKeyboardButton("Descargar", callback_data="descargar")]]
+		button = [[InlineKeyboardButton("Descargar", callback_data="descargar-spotify-audio")]]
 		context.bot.send_message(chat_id=update.effective_chat.id,
 	                             text=message, reply_markup=InlineKeyboardMarkup(button))
 		
