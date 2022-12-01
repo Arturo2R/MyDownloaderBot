@@ -52,19 +52,19 @@ def checkstate(chat):
 x = ['_', '*', '[', ']', '(', ')', '~', '`', '>', '#', '+', '-', '=', '|', '{', '}', '.', '!']
 escape = lambda s, escapechar, specialchars: "".join(escapechar + c if c in specialchars or c == escapechar else c for c in s)
 
-def mostrartarjeta(update, context,user, artist:str, name:str, image:str, album, source, url):
+def mostrartarjeta(update, context, user:UserData,  source:"spotify"or"youtube", url:str, artist="nope", image="nope", album="nope"):
 	#artist=escape(artist, "\\", x)
 	#name=escape(name, "\\", x)
 	#image=escape(image, "\\", x)
 	#album=escape(album, "\\", x)
 	#source=escape(source, "\\", x)
-	message = f" {name} {artist} \n album: {album} \n {url} \n "
+	
 	# message = escape(message, "\\", x)
-	if artist:
-		message = f" {name} {artist} \n album: {album} \n {url} \n "
-		user.title = str(name + ' ' +artist)
-	else:
+	if artist=="nope":
 		message = f"Te refieres a {name} \n {url} \n "
+		user.title = str(name)
+	else:
+		message = f" {name} {artist} \n album: {album} \n {url} \n "
 		user.title = str(name + ' ' +artist)
 	user.url = str(url)
 		
