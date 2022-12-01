@@ -52,16 +52,20 @@ def descarga(url):
     print(file)
     print(song)
 
-  return file, file_title, file_author
+  return file_title, file 
 
-def nuevadescarga(query):
-	songs = spotdl.search([query])
+def nuevadescarga(songg):
 	# results = spotdl.download_songs(songs)
-	song, path = spotdl.download(songs[0])
+	song, path = spotdl.download(songg)
 	print(song)
-	return song, path
+	return song, path 
 
+def nuevabusqueda(query):
+	songs = spotdl.search([query])
+	print(songs[0])
+	return songs[0]
 
+nuevabusqueda("Manuel turizo la bacjata")
 
 def getrecomendaciones(songs, genres, artist):
 	songss = ','.join(songs)

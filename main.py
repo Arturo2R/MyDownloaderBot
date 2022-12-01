@@ -1,16 +1,16 @@
 import logging
 import os
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackQueryHandler
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackQueryHandlerpip
 
 from telegram import InputMediaAudio, InlineQueryResultArticle, InlineKeyboardButton, InlineKeyboardMarkup, constants
-from API import buscar, descarga, nuevadescarga, getrecomendaciones, detectsong
+from API import buscar, descarga, nuevadescarga, getrecomendaciones, detectsong, nuevabusqueda
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO)
 
 class UserData:
-	def __init__(self, chatid, songurl, search, title, username, first, last, mode, songhistory, artisthistory, genres):
+	def __init__(self, chatid, songurl, search, title, username, first, last, mode, songhistory, artisthistory, genres, son):
 		self.chatid = chatid
 		self.songurl = songurl
 		self.search = search
@@ -21,6 +21,7 @@ class UserData:
 		self.songhistory = songhistory
 		self.artishistory = artisthistory
 		self.genres = genres
+		self.son = son
 		
 
 	def __str__(self):
@@ -40,12 +41,50 @@ users = {
   "prop": "todo"
 }
 
+
 def checkstate(chat):
 	if chat.id in users: 
 		print('all okey')
 	else:
-		users[chat.id] = UserData(chat.id, '', '', '', chat.username, chat.first_name, chat.last_name, 'spotify', [], [], [])
+		users[chat.id] = UserData(chat.id, '', '', '', chat.username, chat.first_name, chat.last_name, 'spotify', [], [], [], "")
 	print(users[chat.id])
+
+x = ['_', '*', '[', ']', '(', ')', '~', '`', '>', '#', '+', '-', '=', '|', '{', '}', '.', '!']
+escape = lambda s, escapechar, specialchars: "".join(escapechar + c if c in specialchars or c == escapechar else c for c in s)
+
+def mostrartarjeta(update, context,user, artist:str, name:str, image:str, album, source, url):
+	#artist=escape(artist, "\\", x)
+	#name=escape(name, "\\", x)
+	#image=escape(image, "\\", x)
+	#album=escape(album, "\\", x)
+	#source=escape(source, "\\", x)
+	message = f" {name} {artist} \n album: {album} \n {url} \n "
+	# message = escape(message, "\\", x)
+	if artist:
+		message = f" {name} {artist} \n album: {album} \n {url} \n "
+		user.title = str(name + ' ' +artist)
+	else:
+		message = f"Te refieres a {name} \n {url} \n "
+		user.title = str(name + ' ' +artist)
+	user.url = str(url)
+		
+		
+	button = [[InlineKeyboardButton("Descargar", callback_data=f"descargar-{source}-audio")]]
+	context.bot.send_message(chat_id=update.effective_chat.id,text=message,reply_markup=InlineKeyboardMarkup(button))
+
+def descargar(update, context, id, source):
+	context.bot.send_message(chat_id=id, text="Descargando") 
+	if source == "spotify":
+		song, path = nuevadescarga(users[id].title)
+		if song.song_id not in users[id].songhistory :
+			users[id].songhistory.append(song.song_id)
+		users[id].genres.extend(song.genres)
+	elif source == "youtube":
+		song, path = descarga(users[id].title)
+		
+	context.bot.send_audio(chat_id=id, audio=open(path, 'rb'))
+	os.remove(path)
+	
 	
 
 def start(update, context):
@@ -68,34 +107,29 @@ def echo(update, context):
 		song_title, song_url = buscar(update.message.text)
 		users[chat.id].songurl = song_url
 		users[chat.id].title = song_title
-	
-		context.bot.send_message(chat_id=chat.id, text=f'te refieres a {song_title} {song_url}')
-		context.bot.send_message(
-			chat_id=chat.id,
-			text='Escribe el comando /descargar para descargar la cancion en webm')
+		mostrartarjeta(update, context, users[chat.id], source="youtube", url=song_url, name=song_title)
+		
 	if users[chat.id].mode == 'spotify':
 		context.bot.send_message(chat_id=chat.id,
-							 text=f'Descargando')
+							 text='Descargando')
 		# print(context)
-		print(update.message.text)
-		song, path = nuevadescarga(update.message.text.replace("/spotify", " "))
-		context.bot.send_audio(chat_id=chat.id, audio=open(path, 'rb'))
+		song = nuevabusqueda(update.message.text)
 		
-		if song.song_id not in users[chat.id].songhistory :
-			users[chat.id].songhistory.append(song.song_id)
-
-		users[chat.id].genres.extend(song.genres)
+		users[chat.id].songurl = song.url
+		users[chat.id].title = song.name
+		users[chat.id].son = song
+		mostrartarjeta(update, context, users[chat.id], source="spotify", url=song.url, name=song.name, image=song.cover_url, album=song.album_name, artist=song.artist)
 		
-		os.remove(path)
+		
 		
 
-def descargar(update, context):
-	chat = update.effective_chat
-	checkstate(chat)
+#def descargar(update, context):
+#	chat = update.effective_chat
+#	checkstate(chat)
 	
-	context.bot.send_message(chat_id=chat.id,
-							 text=f'Descargando {users[chat.id].title}')
-	users[chat.id].download(context)
+#	context.bot.send_message(chat_id=chat.id,
+#							 text=f'Descargando {users[chat.id].title}')
+#	users[chat.id].download(context)
 
 def spotifymode(update, context):
 	print("spot")
@@ -136,7 +170,8 @@ def recomendacion(update, context):
 		os.remove(path)
 	else :
 		context.bot.send_message(chat_id=chat.id,
-							 text=f'Necesitas mas canciones')
+							 text='Necesitas mas canciones')
+
 
 # async def inline_mode(update, context):
 # 	query = update.inline_query.query
@@ -146,8 +181,7 @@ def recomendacion(update, context):
 	
 	# input_message_content=InputTextMessageContent(query.upper()),
 
-# x = ['_', '*', '[', ']', '(', ')', '~', '`', '>', '#', '+', '-', '=', '|', '{', '}', '.', '!']
-# escape = lambda s, escapechar, specialchars: "".join(escapechar + c if c in specialchars or c == escapechar else c for c in s)
+
 
 def audio_handler(update, context) -> None:
 	chat = update.effective_chat
@@ -175,17 +209,12 @@ def queryhandler(update, context):
 	query = update.callback_query.data
 	chat = update.effective_chat
 	checkstate(chat)
-	if "descargar" in query:
-		context.bot.send_message(chat_id=update.effective_chat.id,
-                             text="Descargando") 
-		song, path = nuevadescarga(users[chat.id].title)	
-		context.bot.send_audio(chat_id=chat.id, audio=open(path, 'rb'))
-		if song.song_id not in users[chat.id].songhistory :
-			users[chat.id].songhistory.append(song.song_id)
+	if "descargar-spotify-audio" in query:
+		descargar(update, context, chat.id, "spotify"	)
+	if "descargar-youtube-audio" in query:
+		descargar(update, context, chat.id, "youtube"	)
 
-		users[chat.id].genres.extend(song.genres)
-		
-		os.remove(path)
+
 
 
 def unknown(update, context):
