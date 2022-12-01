@@ -41,7 +41,7 @@ def descargayoutube(url, type:"audio"or"video"="audio"):
 			if type == "audio":
 				streams = song.streams.filter(type=type, audio_codec='opus').order_by('abr').last()
 			if type== "video":
-				streams = song.streams.filter(type=type, file_extension='mp4').get_by_resolution("1080p") 
+				streams = song.streams.filter(type=type, file_extension='mp4', video_codec="vp9").order_by('res').last()
   except:
     	streams = song.streams.filter(type=type).order_by('abr').last()
   finally: 
@@ -57,6 +57,7 @@ def descargayoutube(url, type:"audio"or"video"="audio"):
 
   return file_title, file 
 
+descargayoutube("https://www.youtube.com/watch?v=F4neLJQC1_E", "video")
 
 def nuevadescarga(songg):
 	# results = spotdl.download_songs(songs)
