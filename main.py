@@ -3,7 +3,7 @@ import os
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackQueryHandler
 
 from telegram import InputMediaAudio, InlineQueryResultArticle, InlineKeyboardButton, InlineKeyboardMarkup, constants
-from API import buscar, descarga, nuevadescarga, getrecomendaciones, detectsong, nuevabusqueda
+from API import buscar, descargayoutube, nuevadescarga, getrecomendaciones, detectsong, nuevabusqueda
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -78,7 +78,7 @@ def descargar(update, context, id, source):
 			users[id].songhistory.append(song.song_id)
 		users[id].genres.extend(song.genres)
 	elif source == "youtube":
-		song, path = descarga(users[id].title)
+		song, path = descargayoutube(users[id].title)
 		
 	context.bot.send_audio(chat_id=id, audio=open(path, 'rb'))
 	os.remove(path)

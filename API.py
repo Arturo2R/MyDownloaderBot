@@ -35,7 +35,7 @@ def buscar(query):
   return song_title, song_url
 
 
-def descarga(url):
+def descargayoutube(url):
   song = YouTube(url)
   try:
     streams = song.streams.filter(type='audio', audio_codec='opus').order_by('abr')
