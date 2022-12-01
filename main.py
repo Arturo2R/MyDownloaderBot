@@ -78,7 +78,7 @@ def descargar(update, context, id, source):
 			users[id].songhistory.append(song.song_id)
 		users[id].genres.extend(song.genres)
 	elif source == "youtube":
-		song, path = descargayoutube(users[id].title)
+		song, path = descargayoutube(users[id].url)
 		
 	context.bot.send_audio(chat_id=id, audio=open(path, 'rb'))
 	os.remove(path)
