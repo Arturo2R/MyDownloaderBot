@@ -62,15 +62,14 @@ def mostrartarjeta(update, context, user:UserData, name:str,  source:"spotify"or
 		message = f"Te refieres a {name} \n {url} \n "
 	else:
 		message = f" {name} {artist} \n album: {album} \n {url} \n "
-		user.title = str(name + ' ' +artist)
-	
-	
+		user.title = str(name + ' ' +artist)	
 	# message = escape(message, "\\", x)
-
 	button = [[InlineKeyboardButton("Descargar", callback_data=f"descargar-{source}-audio")]]
+	if source == "youtube":
+		button.append([InlineKeyboardButton("Descargar Video", callback_data=f"descargar-{source}-video")]) 
 	context.bot.send_message(chat_id=update.effective_chat.id,text=message,reply_markup=InlineKeyboardMarkup(button))
 
-def descargar(update, context, id, source):
+def descargar(update, context, id, source, type:"audio"or"video"="audio"):
 	context.bot.send_message(chat_id=id, text="Descargando") 
 	if source == "spotify":
 		song, path = nuevadescarga(users[id].son)
@@ -78,7 +77,7 @@ def descargar(update, context, id, source):
 			users[id].songhistory.append(song.song_id)
 		users[id].genres.extend(song.genres)
 	elif source == "youtube":
-		song, path = descargayoutube(users[id].songurl)
+		song, path = descargayoutube(users[id].songurl, type)
 		
 	context.bot.send_audio(chat_id=id, audio=open(path, 'rb'))
 	os.remove(path)
@@ -92,7 +91,7 @@ def start(update, context):
 	context.bot.send_message(
         chat_id=chat.id,
         text=
-        f'Hola {chat.first_name} Soy un robot creado por arturoR, estoy aqui para descargar musica por ti'
+        f'Hola {chat.first_name} Soy un robot creado por @arturo2r, estoy aqui para descargar musica por ti'
     )
 
 
@@ -210,6 +209,8 @@ def queryhandler(update, context):
 		descargar(update, context, chat.id, "spotify"	)
 	if "descargar-youtube-audio" in query:
 		descargar(update, context, chat.id, "youtube"	)
+	if "descargar-youtube-video" in query:
+		descargar(update, context, chat.id, "youtube", "video"	)
 
 
 

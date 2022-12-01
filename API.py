@@ -35,13 +35,15 @@ def buscar(query):
   return song_title, song_url
 
 
-def descargayoutube(url):
+def descargayoutube(url, type:"audio"or"video"="audio"):
   song = YouTube(url)
   try:
-    streams = song.streams.filter(type='audio', audio_codec='opus').order_by('abr')
-    
+			if type == "audio":
+				streams = song.streams.filter(type=type, audio_codec='opus').order_by('abr')
+			if type== "video":
+				streams = song.streams.filter(type=type, progressive=True, file_extension='mp4').order_by('resolution').desc().first().download()
   except:
-    streams = song.streams.filter(type='audio').order_by('abr')  
+    streams = song.streams.filter(type=type).order_by('abr')  
   finally: 
     file = streams.last().download()
     print( streams
@@ -88,7 +90,8 @@ def getrecomendaciones(songs, genres, artist):
 	print(res['tracks'][0]['href'])
 	url = "https://open.spotify.com/track/" + res['tracks'][0]['id']
 	return url
-	
+
+
 
 
 def detectsong(urlofsong):
