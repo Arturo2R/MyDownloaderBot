@@ -108,8 +108,7 @@ def echo(update, context):
 		mostrartarjeta(update, context, users[chat.id], source="youtube", url=song_url, name=song_title)
 		
 	if users[chat.id].mode == 'spotify':
-		context.bot.send_message(chat_id=chat.id,
-							 text='Descargando')
+		
 		# print(context)
 		song = nuevabusqueda(update.message.text)
 		
