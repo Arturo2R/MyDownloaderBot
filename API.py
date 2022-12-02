@@ -39,7 +39,7 @@ def descargayoutube(url, type:"audio"or"video"="audio"):
   song = YouTube(url)
   try:
 			if type == "audio":
-				streams = song.streams.filter(type=type, audio_codec='opus').order_by('abr').last()
+				streams = song.streams.filter(type=type).order_by('abr').last()
 			if type== "video":
 				streams = song.streams.filter(type=type, file_extension='mp4', video_codec="vp9").order_by('res').last()
   except:

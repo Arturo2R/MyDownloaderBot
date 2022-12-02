@@ -191,6 +191,7 @@ def audio_handler(update, context) -> None:
                              text="No se encontro la cancion")
 	else:
 		users[chat.id].title = str(song['name'] + ' ' + song['artist'])
+		users[chat.id].son = nuevabusqueda(users[chat.id].title)
 		message = f" {song['name']} {song['artist']} \n album: {song['album']} \n {song['url']} \n "
 		# message = escape(message, "\\", x)
 		button = [[InlineKeyboardButton("Descargar", callback_data="descargar-spotify-audio")]]
