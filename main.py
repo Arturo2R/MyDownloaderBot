@@ -253,6 +253,8 @@ def main() -> None:
 	dispatcher.add_handler(CommandHandler('recomiendame', recomendacion))
 	dispatcher.add_handler(link_handler)
 	
+	dispatcher.add_handler(CommandHandler('radio', radio))
+	
 	dispatcher.add_handler(MessageHandler(Filters.command, unknown))
 	
 	updater.start_polling()
