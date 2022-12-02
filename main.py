@@ -65,8 +65,8 @@ def mostrartarjeta(update, context, user:UserData, name:str,  source:"spotify"or
 		user.title = str(name + ' ' +artist)	
 	# message = escape(message, "\\", x)
 	button = [[InlineKeyboardButton("Descargar", callback_data=f"descargar-{source}-audio")]]
-	if source == "youtube":
-		button.append([InlineKeyboardButton("Descargar Video", callback_data=f"descargar-{source}-video")]) 
+	#if source == "youtube":
+		#button.append([InlineKeyboardButton("Descargar Video", callback_data=f"descargar-{source}-video")]) 
 	context.bot.send_message(chat_id=update.effective_chat.id,text=message,reply_markup=InlineKeyboardMarkup(button))
 
 def descargar(update, context, id, source, type:"audio"or"video"="audio"):
