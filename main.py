@@ -213,7 +213,10 @@ def queryhandler(update, context):
 	if "descargar-youtube-video" in query:
 		descargar(update, context, chat.id, "youtube", "video"	)
 
-
+def radio(update, context): 
+  context.bot.send_audio(chat_id=update.effective_chat.id, title="Radio Uninorte"
+						   performer="Universidad Del Norte",
+						   audio="https://cactus2.uninorte.edu.co/;stream.mp3")
 
 
 def unknown(update, context):
