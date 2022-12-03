@@ -2,7 +2,7 @@ import logging
 import os
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackQueryHandler
 
-from telegram import InputMediaAudio, InlineQueryResultArticle, InlineKeyboardButton, InlineKeyboardMarkup, constants
+from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, KeyboardButton ,  WebAppInfo,  InputMediaAudio, InlineQueryResultArticle, InlineKeyboardButton, InlineKeyboardMarkup, constants
 from API import buscar, descargayoutube, nuevadescarga, getrecomendaciones, detectsong, nuevabusqueda
 
 logging.basicConfig(
@@ -214,9 +214,24 @@ def queryhandler(update, context):
 		descargar(update, context, chat.id, "youtube", "video"	)
 
 def radio(update, context): 
-  context.bot.send_audio(chat_id=update.effective_chat.id, title="Radio Uninorte"
-						   performer="Universidad Del Norte",
-						   audio="https://cactus2.uninorte.edu.co/;stream.mp3")
+  ##context.bot.send_audio(chat_id=update.effective_chat.id, title="Radio Uninorte"
+	#$				 ,  performer="Universidad Del Norte", mime="audio/mpeg",
+	#			   audio="http://radio-proxy.app.softworks.studio/stream.mp3")
+			context.bot.send_message(
+        chat_id=update.effective_chat.id, text="Unde el boton de abajo para abrir la radio de la Universidad Del Norte",
+        reply_markup=ReplyKeyboardMarkup.from_button(
+            KeyboardButton(
+                text="Abre La Radio De La Universidad Del Norte ",
+                web_app=WebAppInfo(url="https://harmonious-crostata-0d8ebb.netlify.app"),
+            )
+        ),
+    )
+
+def quitradiobutton(update, context):
+	context.bot.send_message(
+        chat_id=update.effective_chat.id, text="Quitado",
+				reply_markup=ReplyKeyboardRemove())
+
 
 
 def unknown(update, context):
@@ -254,6 +269,7 @@ def main() -> None:
 	dispatcher.add_handler(link_handler)
 	
 	dispatcher.add_handler(CommandHandler('radio', radio))
+	dispatcher.add_handler(CommandHandler('quitar', quitradiobutton))
 	
 	dispatcher.add_handler(MessageHandler(Filters.command, unknown))
 	
