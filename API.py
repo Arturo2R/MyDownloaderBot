@@ -55,7 +55,7 @@ def descargayoutube(url, type:"audio"or"video"="audio"):
 			print(file)
 			print(song)
 
-  return file_title, file 
+  return file, file_title, file_author
 
 
 

@@ -28,7 +28,7 @@ class UserData:
 		return f"user:{self.name} id:{self.chatid} url:{self.songurl} query:{self.search}"
 
 	def download(self, context):
-		file, file_title, file_author = descarga(self.songurl)
+		file, file_title, file_author = descargayoutube(self.songurl)
 		print(file, file_title)
 		context.bot.send_audio(chat_id=self.chatid,
 						   performer=file_author,
