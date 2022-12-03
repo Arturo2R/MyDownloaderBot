@@ -137,12 +137,16 @@ def spotifymode(update, context):
 	
 
 def link_d(update, context):
+	print("prin")
+
 	chat = update.effective_chat
 	checkstate(chat)
-	
-	context.bot.send_message(chat_id=chat.id,
-							 text=f'Descargando')
-	users[chat.id].download(context)
+	sons = nuevabusqueda(update.message.text, playlist=True)
+	songs = nuevadescarga(sons, playlist=True)
+	print(songs)
+#context.bot.send_message(chat_id=chat.id,
+							# text=f'Descargando')
+	#users[chat.id].download(context)
 
 def youtubemode(update, context):
 	chat = update.effective_chat
@@ -176,8 +180,25 @@ def recomendacion(update, context):
 #             title="Caps")]
 	
 	# input_message_content=InputTextMessageContent(query.upper()),
+def album(update, context):
+	chat = update.effective_chat
+	checkstate(chat)
+	#global songs
+	st = update.message.text.replace("/album ","")
+	print(st)
 
-
+	
+	sons = nuevabusqueda(st, playlist=True)
+	songs = nuevadescarga(sons, playlist=True)
+	for song in songs:
+		context.bot.send_audio(chat_id=chat.id, audio=open(song[1], 'rb'))
+		print(song[1])
+		os.remove(song[1])
+		#os.remove(song.path)
+	#print(songs)
+	
+#
+	#users[chat.id].download(context)
 
 def audio_handler(update, context) -> None:
 	chat = update.effective_chat
@@ -259,16 +280,16 @@ def main() -> None:
 	youtubeh = CommandHandler('youtube', youtubemode)
 	dispatcher.add_handler(youtubeh)
 	
-	link_handler = MessageHandler(Filters.entity('url'), link_d)
+	#dispatcher.add_handler(MessageHandler(Filters.entity('url'), album))
 
 	dispatcher.add_handler(MessageHandler(Filters.voice & ~Filters.command, audio_handler))
-	dispatcher.add_handler(CallbackQueryHandler(queryhandler))
 
+	dispatcher.add_handler(CallbackQueryHandler(queryhandler))
 	# application.add_handler(InlineQueryHandler(inline_query))
 	dispatcher.add_handler(CommandHandler('recomiendame', recomendacion))
-	dispatcher.add_handler(link_handler)
 	
 	dispatcher.add_handler(CommandHandler('radio', radio))
+	dispatcher.add_handler(CommandHandler('album', album))
 	dispatcher.add_handler(CommandHandler('quitar', quitradiobutton))
 	
 	dispatcher.add_handler(MessageHandler(Filters.command, unknown))

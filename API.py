@@ -59,18 +59,23 @@ def descargayoutube(url, type:"audio"or"video"="audio"):
 
 
 
-def nuevadescarga(songg):
-	# results = spotdl.download_songs(songs)
-	song, path = spotdl.download(songg)
-	print(song)
-	return song, path 
+def nuevadescarga(songg, playlist:bool = False):
+	if playlist:
+		results = spotdl.download_songs(songg)
+		return results
+	else:
+		song, path = spotdl.download(songg)
+		print(song)
+		return song, path 
 
-def nuevabusqueda(query):
+def nuevabusqueda(query, playlist:bool=False):
 	songs = spotdl.search([query])
 	print(songs[0])
-	return songs[0]
+	if playlist:
+		return songs
+	else:
+		return songs[0]
 
-nuevabusqueda("Manuel turizo la bacjata")
 
 def getrecomendaciones(songs, genres, artist):
 	songss = ','.join(songs)
