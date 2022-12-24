@@ -28,12 +28,11 @@ class UserData:
 		return f"user:{self.name} id:{self.chatid} url:{self.songurl} query:{self.search}"
 
 	def download(self, context):
-		file, file_title, file_author = descargayoutube(self.songurl)
-		print(file, file_title)
+		song, path = descargayoutube(self.songurl)
+		print(song, path)
 		context.bot.send_audio(chat_id=self.chatid,
-						   performer=file_author,
-						   audio=open(file, 'rb'))
-		os.remove(file)
+						   audio=open(path, 'rb'))
+		os.remove(path)
 
 
 
@@ -70,6 +69,7 @@ def mostrartarjeta(update, context, user:UserData, name:str,  source:"spotify"or
 	context.bot.send_message(chat_id=update.effective_chat.id,text=message,reply_markup=InlineKeyboardMarkup(button))
 
 def descargar(update, context, id, source, type:"audio"or"video"="audio"):
+	tipo = type
 	context.bot.send_message(chat_id=id, text="Descargando") 
 	if source == "spotify":
 		song, path = nuevadescarga(users[id].son)
@@ -77,8 +77,8 @@ def descargar(update, context, id, source, type:"audio"or"video"="audio"):
 			users[id].songhistory.append(song.song_id)
 		users[id].genres.extend(song.genres)
 	elif source == "youtube":
-		song, path = descargayoutube(users[id].songurl, type)
-		
+		path = descargayoutube(users[id].songurl, tipo)
+
 	context.bot.send_audio(chat_id=id, audio=open(path, 'rb'))
 	os.remove(path)
 	

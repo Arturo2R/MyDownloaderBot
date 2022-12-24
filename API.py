@@ -47,15 +47,13 @@ def descargayoutube(url, type:"audio"or"video"="audio"):
   finally: 
 			print(streams)
 			file = streams.download()
-			print( streams
-					)
 			file_title = song.title
 			file_author = song.author
 			
 			print(file)
 			print(song)
 
-  return file, file_title, file_author
+  return file
 
 
 
