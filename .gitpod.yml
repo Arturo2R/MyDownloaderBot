@@ -2,7 +2,8 @@
 # Please adjust to your needs (see https://www.gitpod.io/docs/config-gitpod-file)
 # and commit this file to your remote git repository to share the goodness with others.
 
+# Commands to start on workspace startup
 tasks:
-  - command: python main.py
-
-
+  - name: Setup & Build
+    init: sudo apt install ffmpeg && pip install -r requirements.txt
+    command: python main.py

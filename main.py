@@ -216,9 +216,9 @@ def audio_handler(update, context) -> None:
 		message = f" {song['name']} {song['artist']} \n album: {song['album']} \n {song['url']} \n "
 		# message = escape(message, "\\", x)
 		button = [[InlineKeyboardButton("Descargar", callback_data="descargar-spotify-audio")]]
-		context.bot.send_message(chat_id=update.effective_chat.id,
-	                             text=message, reply_markup=InlineKeyboardMarkup(button))
-		
+		context.bot.send_photo(photo=song['image'], chat_id=update.effective_chat.id,
+	                             caption=message, reply_markup=InlineKeyboardMarkup(button))
+		#context.bot.send_photo()
 		print(file)
 		# print ("file_id: " + str(update.message.voice.file_id))
 		# file.download('voice.ogg')

@@ -102,21 +102,23 @@ def getrecomendaciones(songs, genres, artist):
 
 def detectsong(urlofsong):
 	try:
-		response = requests.get(
-			"https://api.audd.io/", 
-			params={ 
-				'api_token': os.environ['AUDDTOKEN'], 
-				'url': urlofsong,
-				'return': 'spotify'
-			},
-		)
+		url = "https://shazam-song-recognizer.p.rapidapi.com/recognize"
+
+		querystring = {"link":urlofsong}
+
+		headers = {
+			"X-RapidAPI-Key": os.environ['RAPIDKEY'],
+			"X-RapidAPI-Host": "shazam-song-recognizer.p.rapidapi.com"
+		}
+
+		response = requests.request("GET", url, headers=headers, params=querystring)
 		res = response.json()
 		song = {
-			'artist': res['result']['spotify']['artists'][0]['name'],
-			'name': res['result']['spotify']['name'],
-			'album': res['result']['spotify']['album']['name'],
-			'url': res['result']['spotify']['external_urls']['spotify'],
-			'image':  res['result']['spotify']['album']['images'][0]
+			'artist': res['result']['subtitle'],
+			'name': res['result']['title'],
+			'album': " ",
+			'url': res['result']['url'],
+			'image':  res['result']['images']['coverart']
 		}
 		print(song)
 		return song
