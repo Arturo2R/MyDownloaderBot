@@ -16,7 +16,7 @@ class UserData:
 		self.search = search
 		self.title = title
 		self.username = username
-		self.name = first + ' ' + last
+		self.name = first
 		self.mode = mode
 		self.songhistory = songhistory
 		self.artishistory = artisthistory
@@ -45,7 +45,7 @@ def checkstate(chat):
 	if chat.id in users: 
 		print('all okey')
 	else:
-		users[chat.id] = UserData(chat.id, '', '', '', chat.username, chat.first_name, chat.last_name, 'spotify', [], [], [], "")
+		users[chat.id] = UserData(chat.id, '', '', '', chat.username, chat.first_name, " ", 'spotify', [], [], [], "")
 	print(users[chat.id])
 
 x = ['_', '*', '[', ']', '(', ')', '~', '`', '>', '#', '+', '-', '=', '|', '{', '}', '.', '!']
