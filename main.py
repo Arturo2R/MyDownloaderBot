@@ -1,9 +1,9 @@
 import logging
 import os
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackQueryHandler
-import concurrent.futures
+
 import nest_asyncio
-import asyncio
+
 import math
 
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, KeyboardButton ,  WebAppInfo,  InputMediaAudio, InlineQueryResultArticle, InlineKeyboardButton, InlineKeyboardMarkup, constants
@@ -59,7 +59,6 @@ class UserData:
 				await self.showCard()
 				
 			if self.mode == 'spotify':
-				
 				# print(context)
 				song = nuevabusqueda(self.update.message.text)
 				self.songurl = song.url
@@ -257,7 +256,7 @@ async def album(update, context) -> None:
 
 	await context.bot.send_message(chat_id=chat.id,
 							 text=f'Descargando {sons.__len__()} canciones')
- 
+	
 	songs = nuevadescarga(sons, playlist=True)
 
 	print(sons)
@@ -294,7 +293,8 @@ async def download_audio(audio)-> str:
 	return new_path
 
 async def audio_handler(update, context) -> None:
-	checkstate(update.effective_chat)
+	chat = update.effective_chat
+	checkstate(chat)
  
 	await context.bot.send_message(chat_id=chat.id,
                              text="Buscando")
@@ -306,7 +306,7 @@ async def audio_handler(update, context) -> None:
 	if song == "nope":
 		await context.bot.send_message(chat_id=chat.id,
                              text="No se encontro la cancion")
-  
+	
 	else:
 		users[chat.id].title = str(song['name'] + ' ' + song['artist'])
 		users[chat.id].song = nuevabusqueda(users[chat.id].title)
@@ -315,7 +315,7 @@ async def audio_handler(update, context) -> None:
 		button = [[InlineKeyboardButton("Descargar", callback_data="descargar-spotify-audio")]]
 		await context.bot.send_photo(photo=song['image'], chat_id=update.effective_chat.id,
 	                             caption=message, reply_markup=InlineKeyboardMarkup(button))
-	os.remove(new_path)
+		os.remove(path)
 		#await context.bot.send_photo()
 
 		# print ("file_id: " + str(update.message.voice.file_id))
@@ -359,7 +359,7 @@ async def unknown(update, context):
 
 
 def main() -> None:
-	app = Application.builder().token(os.environ['BOTTOKEN']).read_timeout(100).build()
+	app = Application.builder().token(os.environ['BOTTOKEN']).read_timeout(60).build()
 	
 	
 

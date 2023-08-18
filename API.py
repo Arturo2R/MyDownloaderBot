@@ -58,9 +58,9 @@ def descargayoutube(url, type:"audio"or"video"="audio"):
 
 def nuevadescarga(songg, playlist:bool = False):
 	if playlist:
-		results = spotdl.download_songs(songg)
-		print("Pasa por aca0")
-		return results
+			results = spotdl.download_songs(songg)
+			print("Pasa por aca0")
+			return results
 	else:
 		song, path = spotdl.download(songg)
 		print("Pasa por aca0")
