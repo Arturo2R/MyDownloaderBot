@@ -38,21 +38,20 @@ def buscar(query):
 def descargayoutube(url, type:"audio"or"video"="audio"):
   song = YouTube(url)
   try:
-			if type == "audio":
-				streams = song.streams.filter(type=type).order_by('abr').last()
-			if type== "video":
-				streams = song.streams.filter(type=type, file_extension='mp4').order_by('res').last()
+    if type == 'audio':
+      streams = song.streams.filter(type=type).order_by('abr').last()
+    elif type== "video":
+      streams = song.streams.filter(type=type, file_extension='mp4').order_by('res').last()
   except:
-    	streams = song.streams.filter(type=type).order_by('abr').last()
+    streams = song.streams.filter(type=type).order_by('abr').last()
   finally: 
-			print(streams)
-			file = streams.download()
-			file_title = song.title
-			file_author = song.author
-			
-			print(file)
-			print(song)
-
+    print(streams)
+    file = streams.download()
+    file_title = song.title
+    file_author = song.author
+    
+    print(file)
+    print(song)
   return file
 
 
@@ -60,9 +59,11 @@ def descargayoutube(url, type:"audio"or"video"="audio"):
 def nuevadescarga(songg, playlist:bool = False):
 	if playlist:
 		results = spotdl.download_songs(songg)
+		print("Pasa por aca0")
 		return results
 	else:
 		song, path = spotdl.download(songg)
+		print("Pasa por aca0")
 		print(song)
 		return song, path 
 
@@ -73,6 +74,7 @@ def nuevabusqueda(query, playlist:bool=False):
 		return songs
 	else:
 		return songs[0]
+
 
 
 def getrecomendaciones(songs, genres, artist):
@@ -99,26 +101,24 @@ def getrecomendaciones(songs, genres, artist):
 
 
 
-
 def detectsong(urlofsong):
+	url = "https://shazam-api7.p.rapidapi.com/songs/recognize-song"
+
+	files = { "audio": open(urlofsong, 'rb') }
+	print(files)
+	headers = {
+		"X-RapidAPI-Key": "9f0f33e040mshdde222da854c370p160e02jsn4f671dffc290",
+		"X-RapidAPI-Host": "shazam-api7.p.rapidapi.com"
+	}
 	try:
-		url = "https://shazam-song-recognizer.p.rapidapi.com/recognize"
-
-		querystring = {"link":urlofsong}
-
-		headers = {
-			"X-RapidAPI-Key": os.environ['RAPIDKEY'],
-			"X-RapidAPI-Host": "shazam-song-recognizer.p.rapidapi.com"
-		}
-
-		response = requests.request("GET", url, headers=headers, params=querystring)
-		res = response.json()
+		response = requests.post(url, files=files, headers=headers).json()
+		print(response)
 		song = {
-			'artist': res['result']['subtitle'],
-			'name': res['result']['title'],
+			'artist': response['track']['subtitle'],
+			'name': response['track']['title'],
 			'album': " ",
-			'url': res['result']['url'],
-			'image':  res['result']['images']['coverart']
+			'url': response['track']['url'],
+			'image':  response['track']['images']['coverart']
 		}
 		print(song)
 		return song

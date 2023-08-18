@@ -2,3 +2,8 @@
 replit.nix
 .replit
 ./__pycache__
+.env
+.ogg
+.oga
+.mp3
+.webm

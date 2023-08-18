@@ -1,17 +1,25 @@
 import logging
 import os
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackQueryHandler
+from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackQueryHandler
+import concurrent.futures
+import nest_asyncio
+import asyncio
+import math
 
 from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove, KeyboardButton ,  WebAppInfo,  InputMediaAudio, InlineQueryResultArticle, InlineKeyboardButton, InlineKeyboardMarkup, constants
 from API import buscar, descargayoutube, nuevadescarga, getrecomendaciones, detectsong, nuevabusqueda
+
+nest_asyncio.apply()
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO)
 
 class UserData:
-	def __init__(self, chatid, songurl, search, title, username, first, last, mode, songhistory, artisthistory, genres, son):
-		self.chatid = chatid
+	def __init__(self, update, context,  chatid, songurl, search, title, username, first, last, mode, songhistory, artisthistory, genres, song, album):
+		self.update = update
+		self.context = context
+		self.id = chatid
 		self.songurl = songurl
 		self.search = search
 		self.title = title
@@ -21,37 +29,80 @@ class UserData:
 		self.songhistory = songhistory
 		self.artishistory = artisthistory
 		self.genres = genres
-		self.son = son
+		self.song = song
+		self.album = album
 		
 
 	def __str__(self):
-		return f"user:{self.name} id:{self.chatid} url:{self.songurl} query:{self.search}"
+		return f"user:{self.name} id:{self.id} url:{self.songurl} query:{self.search}"
 
-	def download(self, context):
-		song, path = descargayoutube(self.songurl)
-		print(song, path)
-		context.bot.send_audio(chat_id=self.chatid,
-						   audio=open(path, 'rb'))
+	async def download(self, type:"audio"or"video"="audio"):
+		tipo = type
+		await self.context.bot.send_message(chat_id=self.id, text="Descargando") 
+		if self.mode == "spotify":
+			song, path = nuevadescarga(self.song)
+			if song.song_id not in self.songhistory :
+				self.songhistory.append(song.song_id)
+			self.genres.extend(song.genres)
+		elif self.mode == "youtube":
+			path = descargayoutube(self.songurl, tipo)
+
+		await self.context.bot.send_audio(chat_id=id, audio=open(path, 'rb'))
 		os.remove(path)
 
+	async def searchSong(self):
+			if self.mode == 'youtube': 
+				# global song_title, song_url
+				song_title, song_url = buscar(self.update.message.text)
+				self.songurl = song_url
+				self.title = song_title
+				await self.showCard()
+				
+			if self.mode == 'spotify':
+				
+				# print(context)
+				song = nuevabusqueda(self.update.message.text)
+				self.songurl = song.url
+				self.title = song.name
+				self.song = song
+				self.album = song.album_name
+				await self.showCard()
+				
+
+	async def showCard(self):
+		#artist=escape(artist, "\\", x)
+		#name=escape(name, "\\", x)
+		#image=escape(image, "\\", x)
+		#album=escape(album, "\\", x)
+		#source=escape(source, "\\", x)
+		if self.song.album_artist=="nope":
+			message = f"Te refieres a {album.name} \n {self.album.url} \n "
+		else:
+			message = f" {self.song.display_name} {self.song.album_artist} \n album: {self.song.album_name} \n {self.song.url} \n "
+			self.title = str(self.name + ' ' +self.song.album_artist)	
+		message = escape(message, "\\", x)
+		button = [[InlineKeyboardButton("Descargar", callback_data=f"descargar-{self.mode}-audio")]]
+		#if source == "youtube":
+			#button.append([InlineKeyboardButton("Descargar Video", callback_data=f"descargar-{source}-video")]) 
+		await self.context.bot.send_message(chat_id=self.id,text=message,reply_markup=InlineKeyboardMarkup(button))
 
 
-users = {
-  "prop": "todo"
+users:{int: UserData, int: UserData} = {
+	121212: "FSFSD",
 }
 
 
-def checkstate(chat):
+def checkstate(update, context,  chat):
 	if chat.id in users: 
 		print('all okey')
 	else:
-		users[chat.id] = UserData(chat.id, '', '', '', chat.username, chat.first_name, " ", 'spotify', [], [], [], "")
+		users[chat.id] = UserData(  update, context, chat.id,'', '', '', chat.username, chat.first_name, " ", 'spotify', [], [], [], "", "")
 	print(users[chat.id])
 
-x = ['_', '*', '[', ']', '(', ')', '~', '`', '>', '#', '+', '-', '=', '|', '{', '}', '.', '!']
+x = ['[', ']', '(', ')', '~', '`', '>', '#', '+', '-', '=', '|', '{', '}', '!']
 escape = lambda s, escapechar, specialchars: "".join(escapechar + c if c in specialchars or c == escapechar else c for c in s)
 
-def mostrartarjeta(update, context, user:UserData, name:str,  source:"spotify"or"youtube", url:str, artist="nope", image="nope", album="nope"):
+async def mostrartarjeta(update, context, user:UserData, name:str,  source:"spotify"or"youtube", url:str, artist="nope", image="nope", album="nope"):
 	#artist=escape(artist, "\\", x)
 	#name=escape(name, "\\", x)
 	#image=escape(image, "\\", x)
@@ -66,98 +117,79 @@ def mostrartarjeta(update, context, user:UserData, name:str,  source:"spotify"or
 	button = [[InlineKeyboardButton("Descargar", callback_data=f"descargar-{source}-audio")]]
 	#if source == "youtube":
 		#button.append([InlineKeyboardButton("Descargar Video", callback_data=f"descargar-{source}-video")]) 
-	context.bot.send_message(chat_id=update.effective_chat.id,text=message,reply_markup=InlineKeyboardMarkup(button))
+	await context.bot.send_message(chat_id=update.effective_chat.id,text=message,reply_markup=InlineKeyboardMarkup(button))
 
-def descargar(update, context, id, source, type:"audio"or"video"="audio"):
+async def descargar(update, context, id, source, type:"audio"or"video"="audio"):
 	tipo = type
-	context.bot.send_message(chat_id=id, text="Descargando") 
+	await context.bot.send_message(chat_id=id, text="Descargando") 
 	if source == "spotify":
-		song, path = nuevadescarga(users[id].son)
+		song, path = nuevadescarga(users[id].song)
 		if song.song_id not in users[id].songhistory :
 			users[id].songhistory.append(song.song_id)
 		users[id].genres.extend(song.genres)
 	elif source == "youtube":
 		path = descargayoutube(users[id].songurl, tipo)
 
-	context.bot.send_audio(chat_id=id, audio=open(path, 'rb'))
+	await context.bot.send_audio(chat_id=id, audio=open(path, 'rb'))
 	os.remove(path)
 	
 	
 
-def start(update, context):
+async def start(update, context):
 	chat = update.effective_chat
-	checkstate(chat)
+	checkstate(update, context, chat)
 	
-	context.bot.send_message(
+	await context.bot.send_message(
         chat_id=chat.id,
         text=
         f'Hola {chat.first_name} Soy un robot creado por @arturo2r, estoy aqui para descargar musica por ti'
     )
 
-
-def echo(update, context):
+async def echo(update, context):
 	chat = update.effective_chat
-	checkstate(chat)
-	
-	if users[chat.id].mode == 'youtube': 
-		# global song_title, song_url
-		song_title, song_url = buscar(update.message.text)
-		users[chat.id].songurl = song_url
-		users[chat.id].title = song_title
-		mostrartarjeta(update, context, users[chat.id], source="youtube", url=song_url, name=song_title)
-		
-	if users[chat.id].mode == 'spotify':
-		
-		# print(context)
-		song = nuevabusqueda(update.message.text)
-		
-		users[chat.id].songurl = song.url
-		users[chat.id].title = song.name
-		users[chat.id].son = song
-		mostrartarjeta(update, context, users[chat.id], source="spotify", url=song.url, name=song.name, image=song.cover_url, album=song.album_name, artist=song.artist)
-		
-		
+	checkstate(update, context, chat)
+	await users[chat.id].searchSong()
 		
 
-#def descargar(update, context):
+#async def descargar(update, context):
 #	chat = update.effective_chat
-#	checkstate(chat)
+#	checkstate(update, context, chat)
 	
-#	context.bot.send_message(chat_id=chat.id,
+#	await context.bot.send_message(chat_id=chat.id,
 #							 text=f'Descargando {users[chat.id].title}')
 #	users[chat.id].download(context)
 
-def spotifymode(update, context):
+async def spotifymode(update, context):
 	print("spot")
 	chat = update.effective_chat
-	checkstate(chat)
-	context.bot.send_message(chat_id=chat.id,
+	checkstate(update, context, chat)
+	await context.bot.send_message(chat_id=chat.id,
 							 text=f'Modo Spotify')
 	users[chat.id].mode = 'spotify'
 	
 
-def link_d(update, context):
+async def link_d(update, context):
 	print("prin")
 
 	chat = update.effective_chat
-	checkstate(chat)
+	checkstate(update, context, chat)
 	sons = nuevabusqueda(update.message.text, playlist=True)
-	songs = nuevadescarga(sons, playlist=True)
+	songs = await nuevadescarga(sons, playlist=True)
 	print(songs)
-#context.bot.send_message(chat_id=chat.id,
+#await context.bot.send_message(chat_id=chat.id,
 							# text=f'Descargando')
 	#users[chat.id].download(context)
 
-def youtubemode(update, context):
+async def youtubemode(update, context):
 	chat = update.effective_chat
-	checkstate(chat)
-	context.bot.send_message(chat_id=chat.id,
+	checkstate(update, context, chat)
+	await context.bot.send_message(chat_id=chat.id,
 							 text=f'Modo youtube')
 	users[chat.id].mode = "youtube"
 
-def recomendacion(update, context):
+async def recomendacion(update, context):
 	chat = update.effective_chat
-	checkstate(chat)
+	checkstate(update, context, chat)
 	print(users[chat.id].genres, users[chat.id].songhistory)
 	if len(users[chat.id].songhistory) >= 2:
 		songhref = getrecomendaciones(
@@ -165,80 +197,146 @@ def recomendacion(update, context):
 			users[chat.id].genres[:-1],
 			'',
 		)
-		song, path = nuevadescarga(songhref)
-		context.bot.send_audio(chat_id=chat.id, audio=open(path, 'rb'))
+		song, path = await nuevadescarga(songhref)
+		await context.bot.send_audio(chat_id=chat.id, audio=open(path, 'rb'))
 		os.remove(path)
 	else :
-		context.bot.send_message(chat_id=chat.id,
+		await context.bot.send_message(chat_id=chat.id,
 							 text='Necesitas mas canciones')
 
 
-# async def inline_mode(update, context):
+# async async def inline_mode(update, context):
 # 	query = update.inline_query.query
 # 	results=[InlineQueryResultArticle(
 #             id=str(uuid4()),
 #             title="Caps")]
 	
 	# input_message_content=InputTextMessageContent(query.upper()),
-def album(update, context):
+ 
+ 
+# async def send_songs(context, id, songs):
+#     with concurrent.futures.ThreadPoolExecutor() as executor:
+#         futures = [executor.submit(asyncio.run, send_song(context, id, song)) for song in songs]
+#         for future in concurrent.futures.as_completed(futures):
+#             try:
+#                 result = future.result()
+#             except Exception as e:
+#                 print(f"An error occurred: {e}")
+#                 await context.bot.send_message(chat_id=id, text=f"An error occurred: {e}")
+
+# async def send_song(context, id, song):
+# 	try:
+# 		await context.bot.send_audio(chat_id=id, audio=open(song[1], 'rb'))
+# 		print(song[1])
+# 		# os.remove(song[1])
+# 	except:
+# 		await context.bot.send_message(chat_id=id,
+# 							text=f'No se pudo enviar una a cancion')
+# 	print(f"Sending {song[0]} to the user...")
+      
+async def album(update, context) -> None:
 	chat = update.effective_chat
-	checkstate(chat)
+	checkstate(update, context, chat)
+	await context.bot.send_message(chat_id=chat.id,
+							 text=f'Buscando Playlist')
 	#global songs
 	st = update.message.text.replace("/album ","")
 	print(st)
-
-	
 	sons = nuevabusqueda(st, playlist=True)
+	message = f"*Canciones de {sons[0].list_name}* \n"
+	songNames = []
+	totalSongSeconds = 0
+	for song in sons:
+		songNames.append(f"    {str(song.list_position)} *{song.name}* de _{song.artist}_ \n")
+		totalSongSeconds = totalSongSeconds + song.duration
+	songListNames = escape("".join(songNames), "\\", x)
+	await context.bot.send_message(chat_id=chat.id,
+							 text=f'{message}{songListNames}', parse_mode="MarkdownV2")
+	await context.bot.send_message(chat_id=chat.id, 
+							 text=f'Se demorara {str(math.floor(totalSongSeconds/1000/60*0.1))} minutos en descargarse', parse_mode="MarkdownV2")
+
+	await context.bot.send_message(chat_id=chat.id,
+							 text=f'Descargando {sons.__len__()} canciones')
+ 
 	songs = nuevadescarga(sons, playlist=True)
+
+	print(sons)
+	no_downloaded:int = 0
 	for song in songs:
-		context.bot.send_audio(chat_id=chat.id, audio=open(song[1], 'rb'))
-		print(song[1])
-		os.remove(song[1])
-		#os.remove(song.path)
+		try:
+			await context.bot.send_audio(chat_id=chat.id, audio=open(song[1], 'rb'))
+			print(song[1])
+			# os.remove(song[1])
+		except:
+			no_downloaded = no_downloaded + 1
+			await context.bot.send_message(chat_id=chat.id,
+								text=f'No se pudo enviar una a cancion')
+   
+	await context.bot.send_message(chat_id=chat.id,
+							 text=f'✅ {sons.__len__()-no_downloaded} canciones descargadas')
+	# await send_songs(context, chat.id, songs)
+	os.remove(song.path)
 	#print(songs)
 	
 #
 	#users[chat.id].download(context)
 
-def audio_handler(update, context) -> None:
-	chat = update.effective_chat
-	checkstate(chat)
-	context.bot.send_message(chat_id=chat.id,
+## Move to utils
+async def download_audio(audio)-> str:
+   # download the file and rename it to end with ogg extension and save it in the same path of the script and save the path
+	path = await audio.download_to_drive()
+	filename, extension = os.path.splitext(path)
+
+	# change the extension to '.ogg'
+	new_path = filename + '.ogg'
+	# rename the file
+	os.rename(path, new_path)
+	return new_path
+
+async def audio_handler(update, context) -> None:
+	checkstate(update.effective_chat)
+ 
+	await context.bot.send_message(chat_id=chat.id,
                              text="Buscando")
-	file = context.bot.getFile(update.message.voice)
-	song = detectsong(file.file_path)
+ 
+	file = await context.bot.getFile(update.message.voice)
+	path = await download_audio(file)
+	song = detectsong(path)
+  
 	if song == "nope":
-		context.bot.send_message(chat_id=chat.id,
+		await context.bot.send_message(chat_id=chat.id,
                              text="No se encontro la cancion")
+  
 	else:
 		users[chat.id].title = str(song['name'] + ' ' + song['artist'])
-		users[chat.id].son = nuevabusqueda(users[chat.id].title)
+		users[chat.id].song = nuevabusqueda(users[chat.id].title)
 		message = f" {song['name']} {song['artist']} \n album: {song['album']} \n {song['url']} \n "
 		# message = escape(message, "\\", x)
 		button = [[InlineKeyboardButton("Descargar", callback_data="descargar-spotify-audio")]]
-		context.bot.send_photo(photo=song['image'], chat_id=update.effective_chat.id,
+		await context.bot.send_photo(photo=song['image'], chat_id=update.effective_chat.id,
 	                             caption=message, reply_markup=InlineKeyboardMarkup(button))
-		#context.bot.send_photo()
-		print(file)
+	os.remove(new_path)
+		#await context.bot.send_photo()
+
 		# print ("file_id: " + str(update.message.voice.file_id))
 		# file.download('voice.ogg')
 
-def queryhandler(update, context):
+async def queryhandler(update, context):
 	query = update.callback_query.data
 	chat = update.effective_chat
-	checkstate(chat)
+	checkstate(update, context, chat)
 	if "descargar-spotify-audio" in query:
-		descargar(update, context, chat.id, "spotify"	)
-	if "descargar-youtube-audio" in query:
-		descargar(update, context, chat.id, "youtube"	)
-	if "descargar-youtube-video" in query:
-		descargar(update, context, chat.id, "youtube", "video"	)
+		await descargar(update, context, chat.id, "spotify", "audio")
+	elif "descargar-youtube-audio" in query:
+		await descargar(update, context, chat.id, "youtube", "audio"	)
+	elif "descargar-youtube-video" in query:
+		await descargar(update, context, chat.id, "youtube", "video"	)
 
-def radio(update, context): 
-  ##context.bot.send_audio(chat_id=update.effective_chat.id, title="Radio Uninorte"
+async def radio(update, context): 
+  ##await context.bot.send_audio(chat_id=update.effective_chat.id, title="Radio Uninorte"
 	#$				 ,  performer="Universidad Del Norte", mime="audio/mpeg",
 	#			   audio="http://radio-proxy.app.softworks.studio/stream.mp3")
-			context.bot.send_message(
+			await context.bot.send_message(
         chat_id=update.effective_chat.id, text="Unde el boton de abajo para abrir la radio de la Universidad Del Norte",
         reply_markup=ReplyKeyboardMarkup.from_button(
             KeyboardButton(
@@ -248,53 +346,53 @@ def radio(update, context):
         ),
     )
 
-def quitradiobutton(update, context):
-	context.bot.send_message(
+async def quitradiobutton(update, context):
+	await context.bot.send_message(
         chat_id=update.effective_chat.id, text="Quitado",
 				reply_markup=ReplyKeyboardRemove())
 
 
 
-def unknown(update, context):
-    context.bot.send_message(chat_id=update.effective_chat.id,
+async def unknown(update, context):
+    await context.bot.send_message(chat_id=update.effective_chat.id,
                              text="No entiendo ese comando")
 
 
 def main() -> None:
-	updater = Updater(os.environ['BOTTOKEN'], use_context=True)
+	app = Application.builder().token(os.environ['BOTTOKEN']).read_timeout(100).build()
 	
-	dispatcher = updater.dispatcher
+	
 
 	start_handler = CommandHandler('start', start)
-	dispatcher.add_handler(start_handler)
+	app.add_handler(start_handler)
 	
-	echo_handler = MessageHandler(Filters.text & (~Filters.command), echo)
-	dispatcher.add_handler(echo_handler)
+	echo_handler = MessageHandler(filters.TEXT & (~filters.COMMAND), echo)
+	app.add_handler(echo_handler)
 	
 	descargar_handler = CommandHandler('descargar', descargar)
-	dispatcher.add_handler(descargar_handler)
+	app.add_handler(descargar_handler)
 	
 	spotify = CommandHandler(['spotify', 'calidad'], spotifymode)
-	dispatcher.add_handler(spotify)
+	app.add_handler(spotify)
 	
 	youtubeh = CommandHandler('youtube', youtubemode)
-	dispatcher.add_handler(youtubeh)
+	app.add_handler(youtubeh)
 	
-	#dispatcher.add_handler(MessageHandler(Filters.entity('url'), album))
+	#app.add_handler(MessageHandler(Filters.entity('url'), album))
 
-	dispatcher.add_handler(MessageHandler(Filters.voice & ~Filters.command, audio_handler))
+	app.add_handler(MessageHandler(filters.VOICE & ~filters.COMMAND, audio_handler))
 
-	dispatcher.add_handler(CallbackQueryHandler(queryhandler))
+	app.add_handler(CallbackQueryHandler(queryhandler))
 	# application.add_handler(InlineQueryHandler(inline_query))
-	dispatcher.add_handler(CommandHandler('recomiendame', recomendacion))
+	app.add_handler(CommandHandler('recomiendame', recomendacion))
 	
-	dispatcher.add_handler(CommandHandler('radio', radio))
-	dispatcher.add_handler(CommandHandler('album', album))
-	dispatcher.add_handler(CommandHandler('quitar', quitradiobutton))
+	app.add_handler(CommandHandler('radio', radio))
+	app.add_handler(CommandHandler('album', album))
+	app.add_handler(CommandHandler('quitar', quitradiobutton))
 	
-	dispatcher.add_handler(MessageHandler(Filters.command, unknown))
+	app.add_handler(MessageHandler(filters.COMMAND, unknown))
 	
-	updater.start_polling()
+	app.run_polling()
 
 
 if __name__ == "__main__":
