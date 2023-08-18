@@ -99,7 +99,7 @@ def checkstate(update, context,  chat):
 		users[chat.id] = UserData(  update, context, chat.id,'', '', '', chat.username, chat.first_name, " ", 'spotify', [], [], [], "", "")
 	print(users[chat.id])
 
-x = ['[', ']', '(', ')', '~', '`', '>', '#', '+', '-', '=', '|', '{', '}', '!']
+x = ['-', '[', ']', '(', ')', '~', '`', '>', '#', '+', '-', '=', '|', '{', '}', '!']
 escape = lambda s, escapechar, specialchars: "".join(escapechar + c if c in specialchars or c == escapechar else c for c in s)
 
 async def mostrartarjeta(update, context, user:UserData, name:str,  source:"spotify"or"youtube", url:str, artist="nope", image="nope", album="nope"):
@@ -243,7 +243,7 @@ async def album(update, context) -> None:
 	st = update.message.text.replace("/album ","")
 	print(st)
 	sons = nuevabusqueda(st, playlist=True)
-	message = f"*Canciones de {sons[0].list_name}* \n"
+	message = escape(''.join(f"*Canciones de {sons[0].list_name}* \n"), '\\', x)
 	songNames = []
 	totalSongSeconds = 0
 	for song in sons:
@@ -251,7 +251,7 @@ async def album(update, context) -> None:
 		totalSongSeconds = totalSongSeconds + song.duration
 	songListNames = escape("".join(songNames), "\\", x)
 	await context.bot.send_message(chat_id=chat.id,
-							 text=f'{message}{songListNames}', parse_mode="MarkdownV2")
+							 text=f"{message}{songListNames}", parse_mode="MarkdownV2")
 	await context.bot.send_message(chat_id=chat.id, 
 							 text=f'Se demorara {str(math.floor(totalSongSeconds/1000/60*0.1))} minutos en descargarse', parse_mode="MarkdownV2")
 
@@ -266,7 +266,7 @@ async def album(update, context) -> None:
 		try:
 			await context.bot.send_audio(chat_id=chat.id, audio=open(song[1], 'rb'))
 			print(song[1])
-			# os.remove(song[1])
+			os.remove(song[1])
 		except:
 			no_downloaded = no_downloaded + 1
 			await context.bot.send_message(chat_id=chat.id,
@@ -275,7 +275,7 @@ async def album(update, context) -> None:
 	await context.bot.send_message(chat_id=chat.id,
 							 text=f'✅ {sons.__len__()-no_downloaded} canciones descargadas')
 	# await send_songs(context, chat.id, songs)
-	os.remove(song.path)
+	
 	#print(songs)
 	
 #
