@@ -1,5 +1,7 @@
-python-telegram-bot==13.14
+python-telegram-bot
 pytube
 requests
-spotdl==4.0.5
+spotdl
 ffmpeg
+nest_asyncio
+
