@@ -9,9 +9,7 @@ from telegram.ext import (
 )
 
 import nest_asyncio
-
 import math
-
 from telegram import (
     ReplyKeyboardMarkup,
     ReplyKeyboardRemove,
@@ -32,11 +30,15 @@ from API import (
     nuevabusqueda,
 )
 
+
+
 nest_asyncio.apply()
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
 )
+
+
 
 
 class UserData:
@@ -556,6 +558,8 @@ def main() -> None:
     app.add_handler(CommandHandler("quitar", quitradiobutton))
 
     app.add_handler(MessageHandler(filters.COMMAND, unknown))
+
+    # Se ejecuta la clase y el constructor creara un objeto que se guardará en app
 
     app.run_polling()
 
