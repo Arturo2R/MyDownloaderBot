@@ -42,19 +42,17 @@ def buscar(query):
     return song_title, song_url
 
 
-def descargayoutube(url, type: "audio" or "video" = "audio"):
+def descargayoutube(url, type):
+    letype = type
     song = YouTube(url)
+    streams = None
     try:
         if type == "audio":
-            streams = song.streams.filter(type=type).order_by("abr").last()
+            streams = song.streams.filter(only_audio=True).first()
         elif type == "video":
-            streams = (
-                song.streams.filter(type=type, file_extension="mp4")
-                .order_by("res")
-                .last()
-            )
+            streams = song.streams.filter(file_extension="mp4").order_by("res").last()
     except:
-        streams = song.streams.filter(type=type).order_by("abr").last()
+        streams = song.streams.filter(only_audio=True).order_by("abr").last()
     finally:
         print(streams)
         file = streams.download()

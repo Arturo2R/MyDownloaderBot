@@ -15,8 +15,6 @@ from telegram import (
     ReplyKeyboardRemove,
     KeyboardButton,
     WebAppInfo,
-    InputMediaAudio,
-    InlineQueryResultArticle,
     InlineKeyboardButton,
     InlineKeyboardMarkup,
     constants,
@@ -31,14 +29,11 @@ from API import (
 )
 
 
-
 nest_asyncio.apply()
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
 )
-
-
 
 
 class UserData:
@@ -447,7 +442,7 @@ async def download_audio(audio) -> str:
 
 async def audio_handler(update, context) -> None:
     chat = update.effective_chat
-    checkstate(chat)
+    checkstate(update, context, chat)
 
     await context.bot.send_message(chat_id=chat.id, text="Buscando")
 
@@ -561,7 +556,15 @@ def main() -> None:
 
     # Se ejecuta la clase y el constructor creara un objeto que se guardará en app
 
-    app.run_polling()
+    # app.run_polling(stop_signals=None)
+
+    app.run_webhook(
+        listen="0.0.0.0",
+        port=8443,
+        secret_token="ASecretTokenIHaveChangedByNoww",
+        webhook_url="https://my-downloaderbot.fly.dev",
+        # webhook_url="https://e805-191-88-98-128.ngrok-free.app",
+    )
 
 
 if __name__ == "__main__":

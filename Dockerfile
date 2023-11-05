@@ -17,7 +17,7 @@ RUN python3 -m venv $POETRY_VENV \
     && $POETRY_VENV/bin/pip install poetry==${POETRY_VERSION}
 
 # Create a new stage from the base python image
-FROM python-base as example-app
+FROM python-base as telegrambot
 
 # Copy Poetry to app image
 COPY --from=poetry-base ${POETRY_VENV} ${POETRY_VENV}
@@ -39,8 +39,8 @@ RUN poetry install --no-interaction --no-cache --without dev
 COPY . /app
 
 # install ffmpeg
-RUN apt-get -y update && apt-get -y upgrade && apt-get install -y ffmpeg
+RUN apt-get -y update && apt-get install -y ffmpeg && pip install "python-telegram-bot[webhooks]" && pip install -r requirements.txt
 
 # Run Application
-CMD [ "poetry", "run", "python3", "main.py"]
+CMD [ "python3", "main.py"]
 
