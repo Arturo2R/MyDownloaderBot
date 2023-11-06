@@ -26,6 +26,7 @@ from API import (
     getrecomendaciones,
     detectsong,
     nuevabusqueda,
+    search_album,
 )
 
 
@@ -111,6 +112,9 @@ class UserData:
             self.song = song
             self.album = song.album_name
             await self.showCard()
+
+        if self.mode == "album":
+            await album(self.update, self.context)
 
     async def showCard(self):
         # artist=escape(artist, "\\", x)
@@ -276,6 +280,9 @@ async def spotifymode(update, context):
     checkstate(update, context, chat)
     await users[chat.id].changeMode("spotify")
 
+    if "https://" in update.message.text:
+        await users[chat.id].searchSong()
+
 
 async def link_d(update, context):
     print("prin")
@@ -293,10 +300,13 @@ async def link_d(update, context):
 
 
 async def youtubemode(update, context):
-    print("spot")
+    print("youtubeMode")
     chat = update.effective_chat
     checkstate(update, context, chat)
     await users[chat.id].changeMode("youtube")
+
+    if "https://" in update.message.text:
+        await users[chat.id].searchSong()
 
 
 async def recomendacion(update, context):
@@ -351,15 +361,30 @@ async def album(update, context) -> None:
     checkstate(update, context, chat)
     await context.bot.send_message(chat_id=chat.id, text=f"Buscando Playlist")
     # global songs
+    if (update.message.text == "/album") or (
+        update.message.text == "/album@downloaderbot"
+    ):
+        await context.bot.send_message(
+            chat_id=chat.id,
+            text=f"Modo Busqueda De Album \nEscribe el nombre del album que quieres buscar",
+        )
+        users[chat.id].mode = "album"
+        return
+
     st = update.message.text.replace("/album ", "")
+    if not "https" in st:
+        st = search_album(st)
     print(st)
     sons = nuevabusqueda(st, playlist=True)
-    message = f"*Canciones de {sons[0].list_name}* \n"
+    playListName = escape(sons[0].list_name, "\\", x)
+    message = f"*Canciones de {playListName}* \n"
     message = escape(message, "\\", x)
     songNames = []
     totalSongSeconds = 0
-    await context.bot.send_message(
-        chat_id=chat.id, text=message, parse_mode="MarkdownV2"
+    await context.bot.send_photo(
+        chat_id=chat.id,
+        caption=f"Album: {playListName}",
+        photo=sons[0].cover_url,
     )
     # Haciendo el string del mensaje y mandandolo
     ## Cuantos mensajes hay que mandar, se manda un mensaje por cada 50 canciones
@@ -367,11 +392,13 @@ async def album(update, context) -> None:
     sons.sort(key=lambda x: x.list_position)
     for song in sons:
         songNames.append(
-            f"    {str(song.list_position)} *{song.name}* de _{song.artist}_ \n"
+            f"    {str(song.list_position)} *{song.name}* de _{song.artist}_ {'y ' + song.artists[1] if len(song.artists) > 1 else ''} \n"
         )
         totalSongSeconds = totalSongSeconds + song.duration
     for i in range(messageQuantity):
-        songListNames = escape("".join(songNames[i * 50 : i * 50 + 50]), "\\", x)
+        songListNames = message + escape(
+            "".join(songNames[i * 50 : i * 50 + 50]), "\\", x
+        )
         await context.bot.send_message(
             chat_id=chat.id, text=songListNames, parse_mode="MarkdownV2"
         )
@@ -528,6 +555,31 @@ def main() -> None:
     start_handler = CommandHandler("start", start)
     app.add_handler(start_handler)
 
+    spotify_link_handler = MessageHandler(
+        filters.Regex(
+            r"https:\/\/open\.spotify\.com(\/intl-es)?\/(album|playlist)\/[A-Za-z0-9?=_-]+"
+        ),
+        album,
+    )
+    app.add_handler(spotify_link_handler)
+
+    spotify_link_handler = MessageHandler(
+        filters.Regex(
+            r"https:\/\/open\.spotify\.com(\/intl-es)?\/track\/[A-Za-z0-9?=_-]+"
+        ),
+        spotifymode,
+    )
+    app.add_handler(spotify_link_handler)
+
+    youtube_link_handler = MessageHandler(
+        filters.TEXT
+        & filters.Regex(
+            r"(https?:\/\/)?(www\.)?(youtube|youtu|youtube-nocookie)\.(com|be)\/(watch\?v=|embed\/|v\/|.+\?v=)?([^&=%\?]{11})"
+        ),
+        youtubemode,
+    )
+    app.add_handler(youtube_link_handler)
+
     echo_handler = MessageHandler(filters.TEXT & (~filters.COMMAND), echo)
     app.add_handler(echo_handler)
 
@@ -562,7 +614,7 @@ def main() -> None:
         listen="0.0.0.0",
         port=8443,
         secret_token="ASecretTokenIHaveChangedByNoww",
-        webhook_url="https://my-downloaderbot.fly.dev",
+        webhook_url="https://9567-191-88-98-128.ngrok-free.app",
         # webhook_url="https://e805-191-88-98-128.ngrok-free.app",
     )
 

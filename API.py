@@ -42,6 +42,19 @@ def buscar(query):
     return song_title, song_url
 
 
+def search_album(album_name):
+    headers = {"Authorization": f"Bearer {token}"}
+    params = {"q": album_name, "type": "album", "limit": 1}
+    response = requests.get(
+        "https://api.spotify.com/v1/search", headers=headers, params=params
+    )
+    res = response.json()
+    album = res["albums"]["items"][0]
+    album_name = album["name"]
+    album_url = album["external_urls"]["spotify"]
+    return album_url
+
+
 def descargayoutube(url, type):
     letype = type
     song = YouTube(url)
