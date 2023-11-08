@@ -7,7 +7,8 @@ from telegram.ext import (
     filters,
     CallbackQueryHandler,
 )
-
+import json
+import asyncio
 import nest_asyncio
 import math
 from telegram import (
@@ -29,6 +30,12 @@ from API import (
     search_album,
 )
 
+from openai import OpenAI
+
+client = OpenAI(
+    # defaults to os.environ.get("OPENAI_API_KEY")
+    api_key="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",
+)
 
 nest_asyncio.apply()
 
@@ -55,6 +62,7 @@ class UserData:
         genres,
         song,
         album,
+        thread,
     ):
         self.update = update
         self.context = context
@@ -70,6 +78,7 @@ class UserData:
         self.genres = genres
         self.song = song
         self.album = album
+        self.thread = thread
 
     def __str__(self):
         return f"user:{self.name} id:{self.id} url:{self.songurl} query:{self.search}"
@@ -96,22 +105,23 @@ class UserData:
         await self.context.bot.send_message(chat_id=self.id, text=f"Modo {strin}")
         self.mode = modes
 
-    async def searchSong(self):
+    async def searchSong(self, query=False):
         if self.mode == "youtube":
             # global song_title, song_url
-            song_title, song_url = buscar(self.update.message.text)
+            song_title, song_url = buscar(query or self.update.message.text)
             self.songurl = song_url
             self.title = song_title
             await self.showCard()
 
         if self.mode == "spotify":
             # print(context)
-            song = nuevabusqueda(self.update.message.text)
+            song = nuevabusqueda(query or self.update.message.text)
             self.songurl = song.url
             self.title = song.name
             self.song = song
             self.album = song.album_name
             await self.showCard()
+            return f"title: {self.title}, url: {self.songurl}"
 
         if self.mode == "album":
             await album(self.update, self.context)
@@ -156,6 +166,7 @@ def checkstate(update, context, chat):
         users[chat.id].context = context
         print("all okey")
     else:
+        thread = client.beta.threads.create()
         users[chat.id] = UserData(
             update,
             context,
@@ -172,6 +183,7 @@ def checkstate(update, context, chat):
             [],
             "",
             "",
+            thread,
         )
     print(users[chat.id])
 
@@ -412,9 +424,10 @@ async def album(update, context) -> None:
 
     ## Mensaje de Cuanto tiempo se demorara en descargarse
     button = [[InlineKeyboardButton("Descargar", callback_data=f"descargar-album")]]
+    demora = str(math.floor(((totalSongSeconds / 1000) / 60) * 0.1))
     await context.bot.send_message(
         chat_id=chat.id,
-        text=f"Se demorara {str(math.floor(totalSongSeconds/1000/60*0.1))} minutos en descargarse",
+        text=f"Se demorara {demora} minutos en descargarse",
         reply_markup=InlineKeyboardMarkup(button),
         parse_mode="MarkdownV2",
     )
@@ -507,6 +520,7 @@ async def queryhandler(update, context):
     query = update.callback_query.data
     chat = update.effective_chat
     checkstate(update, context, chat)
+
     if "descargar-spotify-audio" in query:
         await descargar(update, context, chat.id, "spotify", "audio")
     elif "descargar-youtube-audio" in query:
@@ -515,6 +529,97 @@ async def queryhandler(update, context):
         await descargar(update, context, chat.id, "youtube", "video")
     elif "descargar-album" in query:
         await descarga_album(update, context)
+
+
+instruction = "You are a Music Expert assistant you know exatcly how music works, what makes a song a great song, you know what are the most popular songs now, you know every detail about every song ever released. Because you are an apassionate about music, nothing fills your soul more than music.You can download and show songs to the user.  Every time you mention a song, you have to call the function show_song to show the song to the user, you can call this function multiple times to show different songs. Remember every time you mention a song you have to call the function. Not mention a song without calling the function. You arent a objective agent, you have your own opinion about music and what you, although you truly appreciate every gender of music. Always call the function for every song mentioned, dont ask me if may show it, just show it,"
+
+assistant = client.beta.assistants.create(
+    name="Music Expert",
+    instructions=instruction,
+    tools=[
+        {
+            "type": "function",
+            "function": {
+                "name": "search_song",
+                "description": "Show a song the user, you can call this function multiple times to show different songs",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "query": {
+                            "type": "string",
+                            "description": "The search query for showing a song, only put in this the name of the song and the name of the artist nothing more. dont: The Best Song of Bad Bunny, do: Monaco - Bad Bunny",
+                        },
+                    },
+                    "required": ["query"],
+                },
+            },
+        },
+    ],
+    model="gpt-3.5-turbo",
+)
+
+
+async def AI(update, context):
+    chat = update.effective_chat
+    checkstate(update, context, chat)
+    thread = users[chat.id].thread
+    messagge = update.message.text.replace("/ai ", "")
+
+    # Use the new OpenAI Assistant API to generate a response to a user's input let the Assistan call the show_song function
+    message = client.beta.threads.messages.create(
+        thread_id=thread.id,
+        role="user",
+        content=messagge,
+    )
+
+    # get the functions callings from the message
+    run = client.beta.threads.runs.create(
+        thread_id=thread.id,
+        assistant_id=assistant.id,
+        instructions=instruction,
+    )
+    messages = client.beta.threads.messages.list(thread_id=thread.id)
+    while run.status == "queued" or run.status == "in_progress":
+        run = client.beta.threads.runs.retrieve(thread_id=thread.id, run_id=run.id)
+        await asyncio.sleep(1)
+
+    available_functions = {
+        "search_song": users[chat.id].searchSong,
+    }
+
+    print(run)
+    toolOutput = []
+    if run.status == "requires_action":
+        for tool_call in run.required_action.submit_tool_outputs.tool_calls:
+            function_name = tool_call.function.name
+            function_to_call = available_functions[function_name]
+            function_args = json.loads(tool_call.function.arguments)
+            function_response = await function_to_call(
+                query=function_args.get("query"),
+            )
+            toolOutput.append(
+                {
+                    "tool_call_id": tool_call.id,
+                    "output": function_response,
+                }
+            )
+        run = client.beta.threads.runs.submit_tool_outputs(
+            thread_id=thread.id,
+            run_id=run.id,
+            tool_outputs=toolOutput,
+        )
+    while run.status == "queued" or run.status == "in_progress":
+        run = client.beta.threads.runs.retrieve(thread_id=thread.id, run_id=run.id)
+        # sleep a little
+        await asyncio.sleep(1)
+
+    messages = client.beta.threads.messages.list(thread_id=thread.id)
+    print(messages)
+    # for message in messages.data[0]:
+    await context.bot.send_message(
+        chat_id=update.effective_chat.id,
+        text=messages.data[0].content[0].text.value,
+    )
 
 
 async def radio(update, context):
@@ -591,6 +696,7 @@ def main() -> None:
 
     youtubeh = CommandHandler("youtube", youtubemode)
     app.add_handler(youtubeh)
+    app.add_handler(CommandHandler("ai", AI))
 
     # app.add_handler(MessageHandler(Filters.entity('url'), album))
 
@@ -614,8 +720,8 @@ def main() -> None:
         listen="0.0.0.0",
         port=8443,
         secret_token="ASecretTokenIHaveChangedByNoww",
-        webhook_url="https://9567-191-88-98-128.ngrok-free.app",
-        # webhook_url="https://e805-191-88-98-128.ngrok-free.app",
+        # webhook_url="https://my-downloaderbot.fly.dev",
+        webhook_url="https://6b5d-191-88-98-128.ngrok-free.app",
     )
 
 
