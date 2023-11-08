@@ -1,7 +1,7 @@
-/youtube Canciones de baja calidad de youtube
-/spotify Canciones de alta calidad de spotify
-/descargar Descargar la ultima cancion
-/start Iniciar el bot
-/album Buscar  y Descargar el album o playlist
-/radio Iniciar la mejor radio del mundo
-/quitar Quitar el boton de la radio
+youtube - Canciones de baja calidad de youtube
+spotify - Canciones de alta calidad de spotify
+descargar - Descargar la ultima cancion
+start - Iniciar el bot
+album - Buscar y Descargar el album o playlist
+radio - Iniciar la mejor radio del mundo
+quitar - Quitar el boton de la radio
