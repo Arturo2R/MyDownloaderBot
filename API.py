@@ -28,7 +28,7 @@ def spotauthentication():
 token = spotauthentication()
 
 
-def buscar(query):
+def search_youtube(query):
     response = requests.get(
         f"https://www.googleapis.com/youtube/v3/search?key={ os.environ['GOOGLEAPI'] }&part=snippet&q={ query }&maxResults=3&categories=Music"
     )
@@ -55,7 +55,7 @@ def search_album(album_name):
     return album_url
 
 
-def descargayoutube(url, type):
+def download_youtube(url, type):
     letype = type
     song = YouTube(url)
     streams = None
@@ -77,7 +77,7 @@ def descargayoutube(url, type):
     return file
 
 
-def nuevadescarga(songg, playlist: bool = False):
+def download_spotify(songg, playlist: bool = False):
     if playlist:
         results = spotdl.download_songs(songg)
         print("Pasa por aca0")
@@ -89,7 +89,7 @@ def nuevadescarga(songg, playlist: bool = False):
         return song, path
 
 
-def nuevabusqueda(query, playlist: bool = False):
+def search_spotify(query, playlist: bool = False):
     songs = spotdl.search([query])
     print(songs[0])
     if playlist:
@@ -98,7 +98,7 @@ def nuevabusqueda(query, playlist: bool = False):
         return songs[0]
 
 
-def getrecomendaciones(songs, genres, artist):
+def recomendation(songs, genres, artist):
     songss = ",".join(songs)
     genress = ",".join(genres)
     artistss = ",".join(artist)
