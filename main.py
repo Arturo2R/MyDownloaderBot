@@ -68,6 +68,7 @@ class UserData:
         genres=None,
         song=None,
         album=None,
+        artist=None,
     ):
         self.update = update
         self.context = context
@@ -83,6 +84,7 @@ class UserData:
         self.genres = genres
         self.song = song
         self.album = album
+        self.artist: str = artist
         self.thread = thread
 
     def __str__(self):
@@ -121,8 +123,6 @@ class UserData:
 
             if song.song_id and song.song_id not in self.songhistory:
                 self.songhistory.append(song.song_id)
-            if song.genres:
-                self.genres.extend(song.genres)
 
         elif mode == "youtube":
             path = download_youtube(url or self.songurl, "audio")
@@ -156,6 +156,7 @@ class UserData:
             self.title = song.name
             self.song = song
             self.album = song.album_name
+            self.artist = song.album_artist
             await self.showCard(mode="spotify")
             return f"title: {self.title}, url: {self.songurl}"
 
@@ -180,7 +181,12 @@ class UserData:
         button = [
             [
                 InlineKeyboardButton(
-                    "Descargar", callback_data=f"descargar-{self.mode}-audio"
+                    "Descargar Canción", callback_data=f"descargar-{self.mode}-audio"
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    "Descargar Album Entero", callback_data=f"ver-album"
                 )
             ]
         ]
@@ -383,21 +389,22 @@ async def recomendacion(update, context):
 
 
 # input_message_content=InputTextMessageContent(query.upper()),
-async def album(update, context) -> None:
+async def album(update, context ) -> None:
     user = checkstate(update, context)
     await user.sendMessage("Buscando Playlist")
     # global songs
-    if (update.message.text == "/album") or (
-        update.message.text == "/album@downloaderbot"
-    ):
-        await user.sendMessage(
-            "Modo Busqueda De Album \nEscribe el nombre del album que quieres buscar"
-        )
+    if (user.album == ""):   
+        if (update.message.text == "/album") or (
+            update.message.text == "/album@downloaderbot"
+        ):
+            await user.sendMessage(
+                "Modo Busqueda De Album \nEscribe el nombre del album que quieres buscar"
+            )
+            user.mode = "album"
+            return
+    
 
-        user.mode = "album"
-        return
-
-    st = update.message.text.replace("/album ", "")
+    st = f"{user.album} {user.artist}" if  user.album  else update.message.text.replace("/album ", "")
     if "https" not in st:
         # Search for the album
         try:
@@ -419,12 +426,13 @@ async def album(update, context) -> None:
     ## Cuantos mensajes hay que mandar, se manda un mensaje por cada 50 canciones
     messageQuantity: int = math.ceil(sons.__len__() / 50)
 
-    sons.sort(key=lambda x: x.list_position)
+    sons.sort(key=lambda x: x.track_number)
 
     for song in sons:
         totalSongSeconds = totalSongSeconds + song.duration
+        pos = str(song.track_number) or "1"
         songNames.append(
-            f"    {str(song.list_position)}\. *[{es(song.name)}]({song.url})* de _{es(song.artist)}_ {'y ' + es(song.artists[1]) if len(song.artists) > 1 else ''} \n"
+            f"    {pos}\. *[{es(song.name)}]({song.url})* de _{es(song.artist)}_ {'y ' + es(song.artists[1]) if len(song.artists) > 1 else ''} \n"
         )
 
     for i in range(messageQuantity):
@@ -471,7 +479,7 @@ async def descarga_album(update, context):
         except Exception:
             no_downloaded = no_downloaded + 1
             await user.sendMessage("No se pudo enviar una a cancion")
-
+    user.album = ""
     await user.sendMessage(f"✅ {sons.__len__()-no_downloaded} canciones descargadas")
 
 
@@ -550,6 +558,14 @@ async def queryhandler(update, context):
             await user.sendMessage(
                 "Ha ocurrido un error. Vuelve a intentarlo más tarde."
             )
+    elif "ver-album" in query:
+        try:
+            await album(update, context)
+        except Exception as e:
+            logging.error(e)
+            await user.sendMessage(
+                "Ha ocurrido un error. Vuelve a intentarlo más tarde."
+            )
     elif "descargar-album" in query:
         try:
             await descarga_album(update, context)
@@ -570,7 +586,7 @@ assistant = client.beta.assistants.create(
             "type": "function",
             "function": {
                 "name": "search_song",
-                "description": "Show a song the user, you can call this function multiple times to show different songs",
+                "description": "Show a song to the user, you can call this function multiple times to show different songs",
                 "parameters": {
                     "type": "object",
                     "properties": {

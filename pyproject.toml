@@ -1,21 +1,20 @@
-[build-system]
-build-backend = "poetry.masonry.api"
-requires = ["poetry>=1.5.1"]
-
-[tool]
-[tool.poetry]
-authors = ["Arturo Rebolledo <arturoreb2r@outlook.com>"]
-description = ""
+[project]
 name = "mydownloaderbot"
 version = "0.1.0"
-[tool.poetry.dependencies]
-mutagen = "^1.45.1"
-python = ">=3.8,<=3.11.4"
-# "python-telegram-bot[webhooks]" = "^20.4"
-pytube = "^15.0.0"
-requests = "^2.31.0"
-spotdl = "^4.2.0"
-validators = "^0.18.2"
-ffmpeg = "^1.4"
-nest-asyncio = "^1.5.7"
-[tool.poetry.dev-dependencies]
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "typing-extensions>=4.12.2",
+    "typing>=3.10.0.0",
+    "pydantic>=2.9.2",
+    "openai>=1.54.4",
+    "spotdl>=4.2.9",
+    "pytube>=15.0.0",
+    "python-telegram-bot[webhooks]>=21.7",
+    "requests>=2.32.3",
+    "ffmpeg>=1.4",
+    "nest-asyncio>=1.6.0",
+]
+
+
