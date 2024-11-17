@@ -1,0 +1,21 @@
+# fly.toml app configuration file generated for my-downloaderbot on 2023-10-28T09:37:21-05:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = "my-downloaderbot"
+primary_region = "bog"
+
+# [build]
+# builder = "paketobuildpacks/builder:base"
+# buildpacks = ["paketo-buildpacks/python", "paketo-community/ffmpeg"]
+
+[env]
+PORT = "8443"
+
+[http_service]
+internal_port = 8443
+force_https = true
+auto_start_machines = true
+min_machines_running = 0
+processes = ["app"]

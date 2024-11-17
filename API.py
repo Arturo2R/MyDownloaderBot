@@ -28,7 +28,7 @@ def spotauthentication():
 token = spotauthentication()
 
 
-def buscar(query):
+def search_youtube(query):
     response = requests.get(
         f"https://www.googleapis.com/youtube/v3/search?key={ os.environ['GOOGLEAPI'] }&part=snippet&q={ query }&maxResults=3&categories=Music"
     )
@@ -37,24 +37,60 @@ def buscar(query):
     song = res["items"][0]["snippet"]
     song_title = song["title"]
     song_autor = song["channelTitle"]
+    # APue, aqui habia un bug que paraba el programa debido a que aveces salian resultados de canales en la busqueda por lo que no habia videoId
     song_id = res["items"][0]["id"]["videoId"]
     song_url = f"youtube.com/watch?v={ song_id }"
     return song_title, song_url
 
 
-def descargayoutube(url, type: "audio" or "video" = "audio"):
+def search_album(album_name, typ="album"):
+    header = {"Authorization": f"Bearer {token}"}
+    param = {"q": album_name, "type": typ, "limit": 1}
+
+    # Print params object in a nicer way
+    print(json.dumps(param, indent=4))
+
+    # Check status code of response
+    response = requests.get(
+        "https://api.spotify.com/v1/search", headers=header, params=param
+    )
+    print(response)
+
+    # Check if the response has an error
+    res = response.json()
+    if "error" in res:
+        raise Exception(res["error"]["message"])
+
+    # Check if there are any items
+    if len(res["albums"]["items"]) == 0:
+        raise Exception("No albums found that match your query!")
+
+    # Check if the album has a URL
+    album = res["albums"]["items"][0]
+    if not album["external_urls"].get("spotify"):
+        raise Exception("Album does not have a URL!")
+
+    # Get the album name and URL
+    album_name = album["name"]
+    album_url = album["external_urls"]["spotify"]
+    return album_url
+
+
+ar = search_album("The Wall")
+print(ar)
+
+
+def download_youtube(url, typ):
+    letype = typ
     song = YouTube(url)
+    streams = None
     try:
-        if type == "audio":
-            streams = song.streams.filter(type=type).order_by("abr").last()
-        elif type == "video":
-            streams = (
-                song.streams.filter(type=type, file_extension="mp4")
-                .order_by("res")
-                .last()
-            )
+        if typ == "audio":
+            streams = song.streams.filter(only_audio=True).first()
+        elif typ == "video":
+            streams = song.streams.filter(file_extension="mp4").order_by("res").last()
     except:
-        streams = song.streams.filter(type=type).order_by("abr").last()
+        streams = song.streams.filter(only_audio=True).order_by("abr").last()
     finally:
         print(streams)
         file = streams.download()
@@ -66,7 +102,7 @@ def descargayoutube(url, type: "audio" or "video" = "audio"):
     return file
 
 
-def nuevadescarga(songg, playlist: bool = False):
+def download_spotify(songg, playlist: bool = False):
     if playlist:
         results = spotdl.download_songs(songg)
         print("Pasa por aca0")
@@ -78,7 +114,7 @@ def nuevadescarga(songg, playlist: bool = False):
         return song, path
 
 
-def nuevabusqueda(query, playlist: bool = False):
+def search_spotify(query, playlist: bool = False):
     songs = spotdl.search([query])
     print(songs[0])
     if playlist:
@@ -87,7 +123,7 @@ def nuevabusqueda(query, playlist: bool = False):
         return songs[0]
 
 
-def getrecomendaciones(songs, genres, artist):
+def recomendation(songs, genres, artist):
     songss = ",".join(songs)
     genress = ",".join(genres)
     artistss = ",".join(artist)

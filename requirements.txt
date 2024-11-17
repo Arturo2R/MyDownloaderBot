@@ -2,6 +2,7 @@ python-telegram-bot
 pytube
 requests
 spotdl
+openai
 ffmpeg
 nest_asyncio
 

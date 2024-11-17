@@ -11,7 +11,7 @@ version = "0.1.0"
 [tool.poetry.dependencies]
 mutagen = "^1.45.1"
 python = ">=3.8,<=3.11.4"
-python-telegram-bot = "^20.4"
+# "python-telegram-bot[webhooks]" = "^20.4"
 pytube = "^15.0.0"
 requests = "^2.31.0"
 spotdl = "^4.2.0"
