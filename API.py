@@ -37,32 +37,57 @@ def search_youtube(query):
     song = res["items"][0]["snippet"]
     song_title = song["title"]
     song_autor = song["channelTitle"]
+    # APue, aqui habia un bug que paraba el programa debido a que aveces salian resultados de canales en la busqueda por lo que no habia videoId
     song_id = res["items"][0]["id"]["videoId"]
     song_url = f"youtube.com/watch?v={ song_id }"
     return song_title, song_url
 
 
-def search_album(album_name):
-    headers = {"Authorization": f"Bearer {token}"}
-    params = {"q": album_name, "type": "album", "limit": 1}
+def search_album(album_name, typ="album"):
+    header = {"Authorization": f"Bearer {token}"}
+    param = {"q": album_name, "type": typ, "limit": 1}
+
+    # Print params object in a nicer way
+    print(json.dumps(param, indent=4))
+
+    # Check status code of response
     response = requests.get(
-        "https://api.spotify.com/v1/search", headers=headers, params=params
+        "https://api.spotify.com/v1/search", headers=header, params=param
     )
+    print(response)
+
+    # Check if the response has an error
     res = response.json()
+    if "error" in res:
+        raise Exception(res["error"]["message"])
+
+    # Check if there are any items
+    if len(res["albums"]["items"]) == 0:
+        raise Exception("No albums found that match your query!")
+
+    # Check if the album has a URL
     album = res["albums"]["items"][0]
+    if not album["external_urls"].get("spotify"):
+        raise Exception("Album does not have a URL!")
+
+    # Get the album name and URL
     album_name = album["name"]
     album_url = album["external_urls"]["spotify"]
     return album_url
 
 
-def download_youtube(url, type):
-    letype = type
+ar = search_album("The Wall")
+print(ar)
+
+
+def download_youtube(url, typ):
+    letype = typ
     song = YouTube(url)
     streams = None
     try:
-        if type == "audio":
+        if typ == "audio":
             streams = song.streams.filter(only_audio=True).first()
-        elif type == "video":
+        elif typ == "video":
             streams = song.streams.filter(file_extension="mp4").order_by("res").last()
     except:
         streams = song.streams.filter(only_audio=True).order_by("abr").last()
